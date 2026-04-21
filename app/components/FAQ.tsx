@@ -50,7 +50,7 @@ export default function PerguntasFrequentes() {
   const [openItem, setOpenItem] = useState(0);
 
   return (
-    <section className="relative overflow-hidden bg-black px-4 py-24 text-white">
+    <section id="faq" className="relative overflow-hidden bg-black px-4 py-24 text-white">
 
       <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center">
         <div className="mb-10 text-center">

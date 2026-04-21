@@ -42,14 +42,17 @@ export function ShowcaseCarousel() {
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-serif font-bold mb-4"
+            className="text-4xl md:text-5xl  font-bold mb-4"
           >
             Crie uma página de amor <br />
-            <span className="text-linear-to-r from-white via-brand-purple to-white bg-clip-text text-transparent">
-              Totalmente Personalizada
+            <span className="bg-linear-to-r font-extrabold from-[#d946ef] to-[#8b5cf6] bg-clip-text text-transparent md:text-6xl">
+              Totalmente <br /> 
+            </span>
+            <span className="bg-linear-to-r font-extrabold from-[#d946ef] to-[#8b5cf6] bg-clip-text text-transparent md:text-6xl">
+              Personalizada
             </span>
           </motion.h2>
-          <p className="text-white/40 text-sm md:text-base">
+          <p className="text-white/70 text-md md:text-lg">
             Use o assistente passo a passo para montar cada detalhe.
           </p>
         </div>
@@ -64,10 +67,10 @@ export function ShowcaseCarousel() {
               exit={{ opacity: 0, scale: 0.8 }}
               className="flex flex-col items-center"
             >
-              <div className="w-12 h-12 glass rounded-2xl flex items-center justify-center mb-4 text-brand-purple">
+              <div className="w-16 h-16 glass rounded-2xl flex items-center justify-center mb-4 text-brand-purple">
                 {(() => {
                   const Icon = slides[index].icon;
-                  return <Icon className="w-6 h-6" />;
+                  return <Icon className="w-8 h-8" />;
                 })()}
               </div>
               <h3 className="text-3xl md:text-4xl font-bold mb-2">{slides[index].title}</h3>
@@ -84,14 +87,14 @@ export function ShowcaseCarousel() {
             onClick={prev}
             className="absolute left-4 md:left-20 z-30 w-12 h-12 glass rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-10 h-10" />
           </button>
           
           <button 
             onClick={next}
             className="absolute right-4 md:right-20 z-30 w-12 h-12 glass rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all active:scale-95"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-10 h-10" />
           </button>
 
           {/* Phone Display with Drag Support */}
@@ -129,7 +132,7 @@ export function ShowcaseCarousel() {
                      z: isActive ? 0 : -100,
                    }}
                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                   className={`absolute w-[240px] md:w-[280px] aspect-[9/19] rounded-[3rem] border-8 border-zinc-900 bg-white shadow-2xl overflow-hidden pointer-events-none ${!isActive ? 'blur-[2px]' : 'glow-purple'}`}
+                   className={`absolute w-[240px] md:w-[280px] aspect-[9/19] rounded-[3rem] border-8 border-white bg-white shadow-2xl overflow-hidden pointer-events-none ${!isActive ? 'blur-[2px]' : 'glow-purple'}`}
                  >
                    {/* Phone Content Placeholder */}
                    <div className="w-full h-full bg-linear-to-b from-zinc-100 to-zinc-300 flex items-center justify-center p-6">

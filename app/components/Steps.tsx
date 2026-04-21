@@ -37,7 +37,8 @@ export function Steps() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-serif font-bold text-balance"
+            style={{ fontFamily: 'Georgia, serif' }}
+            className="text-4xl md:text-5xl font-semibold text-balance"
           >
             Crie um presente inesquecível em <br className="hidden md:block" />
             <span className="text-brand-purple">4 passos simples</span>

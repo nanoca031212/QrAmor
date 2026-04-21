@@ -16,7 +16,7 @@ import Link from "next/link";
 
 export default function Planos() {
   return (
-    <div className="relative flex w-full flex-col items-center overflow-hidden bg-black py-24 text-white">
+    <div id="planos" className="relative flex w-full flex-col items-center overflow-hidden bg-black py-24 text-white">
 
       {/* Header Badges and Titles */}
       <div className="relative z-10 mb-16 flex flex-col items-center px-4 text-center">

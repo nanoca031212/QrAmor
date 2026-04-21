@@ -34,7 +34,7 @@ export function Hero() {
   }, [displayText, isDeleting, index]);
 
   return (
-    <section className="relative pt-8 pb-20 md:pt-32 md:pb-32 overflow-hidden">
+    <section id="inicio" className="relative overflow-hidden pt-8 pb-20 md:pt-32 md:pb-32">
       {/* Background Glows */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-brand-purple/20 blur-[120px] rounded-full -z-10 animate-pulse" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-brand-purple/10 blur-[100px] rounded-full -z-10" />
