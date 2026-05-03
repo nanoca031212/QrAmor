@@ -65,7 +65,7 @@ const Header = () => {
 
         <div className="hidden md:block">
           <Link
-            href="/Criar"
+            href="/criar"
             className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-base font-medium text-white transition-transform duration-300 hover:scale-105"
           >
             <Heart size={18} />
@@ -101,7 +101,7 @@ const Header = () => {
             </nav>
 
             <Link
-              href="/Criar"
+              href="/criar"
               onClick={() => setIsMenuOpen(false)}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-3 text-base font-medium text-white transition-transform duration-300 hover:scale-[1.01]"
             >

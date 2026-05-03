@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Camera, Heart, Mail, MessageCircleMore } from "lucide-react";
 
 const platformLinks = [
-  { label: "Criar Página", href: "/Criar" },
+  { label: "Criar Página", href: "/criar" },
   { label: "Minhas Criações", href: "#" },
   { label: "Login / Cadastro", href: "#" },
   { label: "Planos e Preços", href: "#" },

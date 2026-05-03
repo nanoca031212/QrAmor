@@ -147,7 +147,7 @@ export default function Planos() {
               possibilidade de recuperação depois disso.
             </p>
           </div>
-          <Link href="/Criar">
+          <Link href="/criar">
             <button className="w-full py-4 px-6 rounded-2xl bg-black border border-white/5 hover:bg-black hover:border-white/10 transition-all flex items-center justify-center gap-2 text-sm font-semibold text-white/90">
               Começar minha surpresa
               <ArrowRight className="w-4 h-4 opacity-70" />
@@ -264,7 +264,7 @@ export default function Planos() {
               <Lock className="w-3 h-3" /> Garantia 7 dias
             </div>
           </div>
-          <Link href="/Criar">
+          <Link href="/criar">
             <button className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 shadow-xl shadow-purple-900/40 transition-all flex items-center justify-center gap-2 text-base font-bold text-white mb-6 group transform hover:scale-[1.02] active:scale-95">
               <Sparkles className="w-4 h-4" />
               Surpreender quem eu amo

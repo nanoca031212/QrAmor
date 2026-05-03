@@ -20,7 +20,8 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   title: "MyCupid - Eternize sua história de amor",
-  description: "Traga mais emoção e presença física para suas lembranças digitais.",
+  description:
+    "Traga mais emoção e presença física para suas lembranças digitais.",
 };
 
 export default function RootLayout({
@@ -34,7 +35,7 @@ export default function RootLayout({
       className={`${inter.variable} ${instrumentSerif.variable} ${caveat.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body 
+      <body
         className="min-h-full flex flex-col bg-[#09090b] text-white overflow-x-hidden"
         suppressHydrationWarning
       >
