@@ -103,6 +103,7 @@ const montagem = () => {
     "P" | "M" | "G" | "GG"
   >("M");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImageIsTall, setUploadedImageIsTall] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -763,11 +764,23 @@ const montagem = () => {
                 {answers[2] || "Sua mensagem de amor..."}
               </p>
               {uploadedImage && (
-                <img
-                  src={uploadedImage}
-                  alt="Foto enviada pelo cliente"
-                  className="mt-4 w-full rounded-2xl object-cover"
-                />
+                <div
+                  className={`mt-4 w-full overflow-hidden rounded-2xl ${
+                    uploadedImageIsTall ? "aspect-[4/5]" : "aspect-square"
+                  }`}
+                >
+                  <img
+                    src={uploadedImage}
+                    alt="Foto enviada pelo cliente"
+                    onLoad={(event) => {
+                      const image = event.currentTarget;
+                      setUploadedImageIsTall(
+                        image.naturalHeight > image.naturalWidth * 1.15,
+                      );
+                    }}
+                    className="h-full w-full object-cover object-center"
+                  />
+                </div>
               )}
             </div>
           </div>
