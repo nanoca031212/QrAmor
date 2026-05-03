@@ -11,7 +11,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type EventoItem = {
   title: string;
@@ -44,6 +44,12 @@ const item: EventoItem[] = [
       "Crie seu perfil para que os usuários possam conhecer o seu perfil",
     suggestionTitles: ["Para a melhor mãe do mundo", "Mãe, te amo 🌸"],
     titleColorOptions: titleColorOptions,
+  },
+  {
+    title:
+      "Agora escreve a mensagem principal 💌 Vai ser a parte que mais toca o coração.",
+    subtitle:
+      "Mãe, eu nunca vou conseguir colocar em palavras o quanto você significa pra mim...",
   },
   {
     title:
@@ -88,6 +94,17 @@ const montagem = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => item.map(() => ""));
   const [activeTitleColor, setActiveTitleColor] = useState("#FFFFFF");
+  const [messageTextStyle, setMessageTextStyle] = useState({
+    bold: false,
+    italic: false,
+    strike: false,
+  });
+  const [messageTextSize, setMessageTextSize] = useState<
+    "P" | "M" | "G" | "GG"
+  >("M");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentItem = item[currentStep];
   const currentAnswer = answers[currentStep] ?? "";
@@ -110,6 +127,36 @@ const montagem = () => {
   const handlePreviousStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
+
+  const toggleMessageTextStyle = (style: "bold" | "italic" | "strike") => {
+    setMessageTextStyle((prev) => ({
+      ...prev,
+      [style]: !prev[style],
+    }));
+  };
+
+  const handleGalleryUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setUploadedImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const messageSizeClass = {
+    P: "text-xs",
+    M: "text-sm",
+    G: "text-base",
+    GG: "text-lg",
+  }[messageTextSize];
 
   return (
     <div className="relative  overflow-hidden ">
@@ -156,20 +203,154 @@ const montagem = () => {
         </div>
         <div className="flex w-full gap-3 overflow-x-auto py-3 text-sm">
           {(currentItem.suggestionTitles ?? []).map((title) => (
-            <div
+            <button
               key={title}
-              className="shrink-0 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-white"
+              type="button"
+              onClick={() => handleAnswerChange(title)}
+              className="shrink-0 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-white transition-colors hover:bg-white/10"
             >
               <h1>{title}</h1>
-            </div>
+            </button>
           ))}
         </div>
         <div>
           <div>
             {currentStep === 2 && (
+              <>
+                <div className=" flex justify-between">
+                  <div className="flex flex-col  pb-3 gap-3">
+                    <h1 className="text-xs font-bold uppercase tracking-[0.2em] text-white/45">
+                      Estilo
+                    </h1>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleMessageTextStyle("bold")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextStyle.bold
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="font-bold">B</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleMessageTextStyle("italic")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextStyle.italic
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="italic">I</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleMessageTextStyle("strike")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextStyle.strike
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="line-through">S</span>
+                      </button>
+                    </div>
+                  </div>
+                  {/* segundo */}
+                  <div className="flex flex-col  pb-3 gap-3">
+                    <h1 className="text-xs font-bold uppercase tracking-[0.2em] text-white/45">
+                      Tamanho do texto
+                    </h1>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setMessageTextSize("P")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextSize === "P"
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="font-semibold">P</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMessageTextSize("M")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextSize === "M"
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="font-semibold">M</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMessageTextSize("G")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextSize === "G"
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="font-semibold">G</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setMessageTextSize("GG")}
+                        className={`flex h-10 w-10 items-center justify-center border text-lg transition-colors ${
+                          messageTextSize === "GG"
+                            ? "border-fuchsia-400 bg-fuchsia-500/15 text-white"
+                            : "border-white/10 bg-white/5 text-white/70"
+                        }`}
+                      >
+                        <span className="text-sm font-semibold">GG</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <textarea
+                  placeholder={currentItem.subtitle}
+                  maxLength={2000}
+                  value={currentAnswer}
+                  onChange={(event) => handleAnswerChange(event.target.value)}
+                  className="min-h-[150px] w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-white/90 outline-none transition-colors resize-none placeholder:text-white/35 focus:border-[#7B2654] focus-visible:border-[#7B2654]"
+                />
+
+                <div className="mt-1 pr-1 text-xs font-semibold text-right text-white/60 ">
+                  <h1>{currentAnswer.length}/2000</h1>
+                </div>
+              </>
+            )}
+            {currentStep === 3 && (
               <div className="flex items-center mb-3 gap-4">
                 <button
                   type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  className="flex w-full flex-col items-center justify-center rounded-2xl border border-[#522541] bg-[#311539] px-4 py-2 text-center transition-colors hover:bg-white/7"
+                >
+                  <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/8 text-white/80">
+                    <ImagePlus size={18} />
+                  </div>
+                  <h1 className="text-sm font-semibold text-white">
+                    Enviar foto
+                  </h1>
+                  <p className="mt-1 text-xs text-white/45">Da galeria</p>
+                </button>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleGalleryUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
                   className="flex w-full flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-center transition-colors hover:bg-white/7"
                 >
                   <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/8 text-white/80">
@@ -180,21 +361,17 @@ const montagem = () => {
                   </h1>
                   <p className="mt-1 text-xs text-white/45">Usar camera</p>
                 </button>
-                <button
-                  type="button"
-                  className="flex w-full flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-center transition-colors hover:bg-white/7"
-                >
-                  <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/8 text-white/80">
-                    <ImagePlus size={18} />
-                  </div>
-                  <h1 className="text-sm font-semibold text-white">
-                    Enviar foto
-                  </h1>
-                  <p className="mt-1 text-xs text-white/45">Da galeria</p>
-                </button>
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleGalleryUpload}
+                  className="hidden"
+                />
               </div>
             )}
-            {currentStep === 3 && (
+            {currentStep === 4 && (
               <div className="flex items-center mb-3 gap-4">
                 <button
                   type="button"
@@ -214,7 +391,7 @@ const montagem = () => {
                 </button>
               </div>
             )}
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <div className="flex items-center mb-3 gap-4">
                 <button
                   type="button"
@@ -246,7 +423,7 @@ const montagem = () => {
                 </button>
               </div>
             )}
-            {currentStep === 7 && (
+            {currentStep === 8 && (
               <div className="flex flex-col mb-4 gap-2">
                 <button
                   type="button"
@@ -326,7 +503,7 @@ const montagem = () => {
                 </button>
               </div>
             )}
-            {currentStep === 8 && (
+            {currentStep === 9 && (
               <div className="mb-4 flex flex-col gap-4">
                 <div className="relative overflow-visible rounded-[1.75rem] border-2 border-yellow-400 bg-[linear-gradient(180deg,rgba(120,32,72,0.28)_0%,rgba(28,9,34,0.96)_100%)] px-4 pb-5 pt-6 shadow-[0_0_30px_rgba(250,204,21,0.14)]">
                   <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-orange-600 via-yellow-600 to-violet-600 px-3 py-1 text-center text-[10px] font-black uppercase tracking-wide text-white shadow-lg">
@@ -440,7 +617,7 @@ const montagem = () => {
                 </div>
               </div>
             )}
-            {currentStep === 6 && (
+            {currentStep === 7 && (
               <div className="mb-2">
                 <div className="uppercase text-white/80 text-sm mb-1 font-bold">
                   <h1>
@@ -486,11 +663,12 @@ const montagem = () => {
             )}
 
             {currentStep !== 2 &&
-              currentStep !== 4 &&
               currentStep !== 3 &&
-              currentStep !== 6 &&
+              currentStep !== 4 &&
+              currentStep !== 5 &&
               currentStep !== 7 &&
-              currentStep !== 8 && (
+              currentStep !== 8 &&
+              currentStep !== 9 && (
                 <>
                   <input
                     type="text"
@@ -575,9 +753,22 @@ const montagem = () => {
               >
                 {answers[1] || "Seu Titulo Aqui"}
               </p>
-              <p className="mt-3 text-center text-sm font-medium text-white/75">
+              <p
+                className={`mt-3 text-center text-white/75 ${messageSizeClass} ${
+                  messageTextStyle.bold ? "font-bold" : "font-medium"
+                } ${messageTextStyle.italic ? "italic" : ""} ${
+                  messageTextStyle.strike ? "line-through" : ""
+                }`}
+              >
                 {answers[2] || "Sua mensagem de amor..."}
               </p>
+              {uploadedImage && (
+                <img
+                  src={uploadedImage}
+                  alt="Foto enviada pelo cliente"
+                  className="mt-4 w-full rounded-2xl object-cover"
+                />
+              )}
             </div>
           </div>
         </div>
