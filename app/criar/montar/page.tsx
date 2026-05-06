@@ -3,15 +3,19 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Calendar,
   Camera,
   CircleHelp,
+  Eye,
   Gamepad2,
   ImagePlus,
   Puzzle,
   WandSparkles,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import DomeGallery, { GalleryImage } from "@/app/components/DomeGallery";
 
 type EventoItem = {
   title: string;
@@ -102,7 +106,8 @@ const montagem = () => {
   const [messageTextSize, setMessageTextSize] = useState<
     "P" | "M" | "G" | "GG"
   >("M");
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<GalleryImage[]>([]);
+  const [isDomeOpen, setIsDomeOpen] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -163,8 +168,28 @@ const montagem = () => {
       ),
     );
 
-    setUploadedImages((prev) => [...prev, ...imageUrls]);
+    setUploadedImages((prev) => [
+      ...prev,
+      ...imageUrls.map((url) => ({
+        id: crypto.randomUUID(),
+        url,
+        date: "",
+        description: "",
+      })),
+    ]);
     event.target.value = "";
+  };
+
+  const updateImageField = (id: string | undefined, field: 'date' | 'description', value: string) => {
+    if (!id) return;
+    setUploadedImages((prev) => 
+      prev.map(img => img.id === id ? { ...img, [field]: value } : img)
+    );
+  };
+
+  const removeImage = (id: string | undefined) => {
+    if (!id) return;
+    setUploadedImages((prev) => prev.filter(img => img.id !== id));
   };
 
   const messageSizeClass = {
@@ -176,6 +201,25 @@ const montagem = () => {
 
   return (
     <div className="relative  overflow-hidden ">
+      {isDomeOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black">
+          <div className="relative z-10 flex w-full items-center justify-between p-6 bg-gradient-to-b from-black/80 to-transparent">
+            <div className="flex flex-col gap-1">
+              <span className="text-white font-bold text-xl">Nossa Linha do Tempo</span>
+              <span className="text-xs text-white/50">Toque e arraste para girar</span>
+            </div>
+            <button onClick={() => setIsDomeOpen(false)} className="text-white/70 hover:text-white flex items-center justify-center h-10 w-10 rounded-full bg-white/5 border border-white/10 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <DomeGallery 
+              images={uploadedImages} 
+              itemsCount={uploadedImages.length > 0 ? Math.max(12, uploadedImages.length * 2) : 20} 
+            />
+          </div>
+        </div>
+      )}
       <div className="absolute left-[-88px] top-24 h-[280px] w-[280px] rounded-full bg-fuchsia-500/28 blur-[95px] -z-20 animate-pulse md:top-0 md:left-1/4 md:h-[500px] md:w-[500px] md:bg-brand-purple/20 md:blur-[120px]" />
       <div className="absolute bottom-[-70px] right-[-50px] h-[260px] w-[260px] rounded-full bg-violet-500/20 blur-[100px] -z-10 md:bottom-0 md:right-1/4 md:h-[400px] md:w-[400px] md:bg-brand-purple/10 md:blur-[100px]" />
 
@@ -357,14 +401,6 @@ const montagem = () => {
                   </h1>
                   <p className="mt-1 text-xs text-white/45">Da galeria</p>
                 </button>
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleGalleryUpload}
-                  className="hidden"
-                />
                 <button
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
@@ -378,20 +414,13 @@ const montagem = () => {
                   </h1>
                   <p className="mt-1 text-xs text-white/45">Usar camera</p>
                 </button>
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleGalleryUpload}
-                  className="hidden"
-                />
               </div>
             )}
             {currentStep === 4 && (
-              <div className="flex items-center mb-3 gap-4">
+              <div className="flex flex-col mb-3 gap-4">
                 <button
                   type="button"
+                  onClick={() => galleryInputRef.current?.click()}
                   className="flex w-full flex-col items-center justify-center rounded-2xl border border-[#522541] bg-[#311539] px-4 py-3 text-center transition-colors hover:bg-white/7"
                 >
                   <div className="flex flex-row items-center  justify-center gap-4">
@@ -399,13 +428,46 @@ const montagem = () => {
                       <ImagePlus size={18} />
                     </div>
                     <h1 className="text-sm font-semibold text-white">
-                      Adicionar momentos (0/24)
+                      Adicionar momentos ({uploadedImages.length}/24)
                     </h1>
                   </div>
                   <p className="mt-1 text-xs text-white/45">
                     pode escolher várias fotos de uma vez
                   </p>
                 </button>
+                
+                <div className="flex flex-col gap-3">
+                  {uploadedImages.map((img) => (
+                    <div key={img.id} className="flex gap-3 bg-[#1A0B18] border border-[#2D162A] rounded-xl p-3 relative">
+                      <img src={img.url} className="w-[72px] h-[72px] min-w-[72px] rounded-lg object-cover" alt="Momento" />
+                      <div className="flex flex-col gap-2 flex-1 pt-1">
+                        <div className="flex items-center gap-2 bg-[#0C0212] border border-[#2D162A] rounded-md px-3 py-1.5">
+                           <Calendar size={14} className="text-white/50" />
+                           <input 
+                             placeholder="Data do momento"
+                             value={img.date || ""}
+                             onChange={(e) => updateImageField(img.id, 'date', e.target.value)}
+                             className="bg-transparent border-none outline-none text-xs font-semibold text-white/70 w-full"
+                           />
+                        </div>
+                        <div className="flex items-center gap-2 bg-[#0C0212] border border-[#2D162A] rounded-md px-3 py-1.5">
+                           <input 
+                             placeholder="Conta o que rolou..."
+                             value={img.description || ""}
+                             onChange={(e) => updateImageField(img.id, 'description', e.target.value)}
+                             className="bg-transparent border-none outline-none text-xs font-bold text-white w-full"
+                           />
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => removeImage(img.id)}
+                        className="absolute top-2 right-2 p-1 text-white/40 hover:text-white"
+                      >
+                         <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {currentStep === 5 && (
@@ -701,6 +763,25 @@ const montagem = () => {
                 </>
               )}
           </div>
+
+          {/* Hidden inputs for gallery and camera */}
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleGalleryUpload}
+            className="hidden"
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleGalleryUpload}
+            className="hidden"
+          />
+
           {currentStep === 1 && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-center justify-between">
@@ -779,15 +860,28 @@ const montagem = () => {
               >
                 {answers[2] || "Sua mensagem de amor..."}
               </p>
+              
+              {currentStep >= 4 && (
+                <div className="mt-6 w-full mb-2">
+                  <button
+                    onClick={() => setIsDomeOpen(true)}
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#4A2440] bg-[#1E0E1C] px-4 py-3 text-center transition-colors hover:bg-white/5 shadow-lg shadow-fuchsia-900/20"
+                  >
+                    <Eye size={18} className="text-white/80" />
+                    <span className="text-sm font-semibold text-white">Nossa Linha do Tempo</span>
+                  </button>
+                </div>
+              )}
+
               {uploadedImages.length > 0 && (
-                <div className="static-carousel mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none]">
+                <div className={`static-carousel flex w-full snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] ${currentStep === 4 ? "mt-2" : "mt-4"}`}>
                   {uploadedImages.map((image, index) => (
                     <div
-                      key={`${image}-${index}`}
+                      key={image.id || index}
                       className="aspect-square min-w-full snap-start overflow-hidden rounded-3xl"
                     >
                       <img
-                        src={image}
+                        src={image.url}
                         alt={`Foto enviada pelo cliente ${index + 1}`}
                         className="h-full w-full object-cover"
                       />
