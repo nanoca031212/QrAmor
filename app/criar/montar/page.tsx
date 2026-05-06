@@ -102,8 +102,7 @@ const montagem = () => {
   const [messageTextSize, setMessageTextSize] = useState<
     "P" | "M" | "G" | "GG"
   >("M");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [uploadedImageIsTall, setUploadedImageIsTall] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -136,20 +135,36 @@ const montagem = () => {
     }));
   };
 
-  const handleGalleryUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleGalleryUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(event.target.files ?? []);
 
-    if (!file) {
+    if (files.length === 0) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setUploadedImage(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    const imageUrls = await Promise.all(
+      files.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              if (typeof reader.result === "string") {
+                resolve(reader.result);
+              } else {
+                reject(new Error("Falha ao carregar imagem"));
+              }
+            };
+            reader.onerror = () =>
+              reject(new Error("Falha ao ler arquivo enviado"));
+            reader.readAsDataURL(file);
+          }),
+      ),
+    );
+
+    setUploadedImages((prev) => [...prev, ...imageUrls]);
+    event.target.value = "";
   };
 
   const messageSizeClass = {
@@ -346,6 +361,7 @@ const montagem = () => {
                   ref={galleryInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleGalleryUpload}
                   className="hidden"
                 />
@@ -763,23 +779,20 @@ const montagem = () => {
               >
                 {answers[2] || "Sua mensagem de amor..."}
               </p>
-              {uploadedImage && (
-                <div
-                  className={`mt-4 w-full overflow-hidden rounded-2xl ${
-                    uploadedImageIsTall ? "aspect-[4/5]" : "aspect-square"
-                  }`}
-                >
-                  <img
-                    src={uploadedImage}
-                    alt="Foto enviada pelo cliente"
-                    onLoad={(event) => {
-                      const image = event.currentTarget;
-                      setUploadedImageIsTall(
-                        image.naturalHeight > image.naturalWidth * 1.15,
-                      );
-                    }}
-                    className="h-full w-full object-cover object-center"
-                  />
+              {uploadedImages.length > 0 && (
+                <div className="static-carousel mt-4 flex w-full snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none]">
+                  {uploadedImages.map((image, index) => (
+                    <div
+                      key={`${image}-${index}`}
+                      className="aspect-square min-w-full snap-start overflow-hidden rounded-3xl"
+                    >
+                      <img
+                        src={image}
+                        alt={`Foto enviada pelo cliente ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
