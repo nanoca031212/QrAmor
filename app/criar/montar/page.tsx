@@ -925,7 +925,7 @@ const montagem = () => {
                             const reader = new FileReader();
                             reader.onload = () => {
                               if (typeof reader.result === 'string') {
-                                setGames(prev => ({ ...prev, puzzle: { ...prev.puzzle, image: reader.result } }));
+                                setGames(prev => ({ ...prev, puzzle: { ...prev.puzzle, image: reader.result as string } }));
                               }
                             };
                             reader.readAsDataURL(file);

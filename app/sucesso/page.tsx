@@ -411,7 +411,7 @@ export default function SucessoPage() {
           <div className="absolute inset-0 z-[250] bg-black animate-in fade-in duration-500">
              <button onClick={() => setIsDomeOpen(false)} className="absolute top-10 right-6 z-10 text-white/50"><X size={24}/></button>
              <div className="w-full h-full">
-                <DomeGallery images={data.uploadedImages} isPreview={true} onOpen={() => {}} />
+                <DomeGallery images={data.uploadedImages} />
              </div>
           </div>
         )}
