@@ -221,7 +221,7 @@ export default function SucessoPage() {
         
         {/* Content Scrollable */}
         <div className="relative h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none]">
-           <div className="flex flex-col items-center px-6 pt-16 pb-24">
+           <div className="flex flex-col items-center px-6 pt-16 pb-40">
               <img src="/Logo.png" alt="Logo" className="w-16 mb-8 floating-logo" />
               
               <h1 
@@ -235,6 +235,11 @@ export default function SucessoPage() {
                 {data.answers[2]}
               </p>
 
+              <button onClick={() => setIsDomeOpen(true)} className="mt-8 w-full py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl flex items-center justify-center gap-3 text-white font-bold transition-all hover:bg-white/20">
+                 <Eye size={20} className="text-white/80" />
+                 Nossa Linha do Tempo
+              </button>
+
               {data.uploadedImages.length > 0 && (
                 <div className="mt-10 w-full flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none]">
                   {data.uploadedImages.map((img: any, idx: number) => (
@@ -245,11 +250,7 @@ export default function SucessoPage() {
                 </div>
               )}
 
-              <div className="mt-8 w-full flex flex-col gap-3">
-                 <button onClick={() => setIsDomeOpen(true)} className="w-full py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl flex items-center justify-center gap-3 text-white font-bold transition-all hover:bg-white/20">
-                    <Eye size={20} className="text-white/80" />
-                    Nossa Linha do Tempo
-                 </button>
+              <div className="mt-4 w-full flex flex-col gap-3">
                  {(data.games.puzzle.active || data.games.memory.active || data.games.quiz.active) && (
                    <button onClick={() => setIsGameSelectorOpen(true)} className="w-full py-4 bg-fuchsia-500/10 backdrop-blur-md border border-fuchsia-500/30 rounded-3xl flex items-center justify-center gap-3 text-white font-bold transition-all hover:bg-fuchsia-500/20">
                       <Gamepad2 size={20} className="text-fuchsia-400" />
