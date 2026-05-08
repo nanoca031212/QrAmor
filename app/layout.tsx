@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Instrument_Serif, Caveat } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,7 +40,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-[#09090b] text-white overflow-x-hidden"
         suppressHydrationWarning
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -18,7 +18,7 @@ const directOptions = [
 
 const Criacao = () => {
   return (
-    <section className="relative min-h-screen overflow-hidden flex items-center justify-center bg-center  text-white">
+    <section className="relative min-h-screen overflow-hidden md:px-0 px-4 flex items-center justify-center bg-center  text-white">
       <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center pt-10 text-center">
         <div className="mb-8 flex w-full items-center justify-between gap-4">
           <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm font-semibold text-white/90">
@@ -44,6 +44,30 @@ const Criacao = () => {
         </div>
 
         <div className="flex w-full flex-col gap-6">
+          <Link href="/criar/montar">
+            <button
+              type="button"
+              className="group relative w-full rounded-[1.7rem] border border-pink-500/30 bg-pink-500/8 px-5 py-5 text-left shadow-[0_0_40px_rgba(236,72,153,0.10)] transition-all hover:border-pink-400/40 hover:bg-pink-500/10"
+            >
+              <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                Dia das Mães
+              </span>
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-pink-300/20 bg-pink-500/12 text-4xl text-pink-300">
+                  🌸
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-white">
+                    Presente para Mãe
+                  </h2>
+                  <p className="mt-1 text-sm text-white/50">
+                    Homenageie quem sempre esteve por você
+                  </p>
+                </div>
+                <ChevronRight className="text-white/35 transition-transform group-hover:translate-x-1 group-hover:text-white" />
+              </div>
+            </button>
+          </Link>
           <Link href="/criar/montar">
             <button
               type="button"
@@ -105,14 +129,16 @@ const Criacao = () => {
 
         <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-3">
           {directOptions.map(({ label, icon: Icon, color }) => (
-            <button
-              key={label}
-              type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/75 transition-all hover:border-white/15 hover:bg-white/[0.07] hover:text-white"
-            >
-              <Icon className={color} size={14} fill="currentColor" />
-              {label}
-            </button>
+            <Link key={label} href="/criar/montar">
+              <button
+                key={label}
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/75 transition-all hover:border-white/15 hover:bg-white/[0.07] hover:text-white"
+              >
+                <Icon className={color} size={14} fill="currentColor" />
+                {label}
+              </button>
+            </Link>
           ))}
 
           <button

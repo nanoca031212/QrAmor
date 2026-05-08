@@ -65,11 +65,11 @@ const Header = () => {
 
         <div className="hidden md:block">
           <Link
-            href="/criar"
-            className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-base font-medium text-white transition-transform duration-300 hover:scale-105"
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_45%,#a855f7_100%)] px-5 py-2 text-base font-semibold text-white shadow-[0_8px_24px_rgba(139,92,246,0.28)] transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_28px_rgba(168,85,247,0.34)]"
           >
-            <Heart size={18} />
-            Criar minha página
+            <Heart size={16} className="text-white/90" />
+            Minha Conta
           </Link>
         </div>
 

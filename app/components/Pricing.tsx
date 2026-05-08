@@ -16,8 +16,10 @@ import Link from "next/link";
 
 export default function Planos() {
   return (
-    <div id="planos" className="relative flex w-full flex-col items-center overflow-hidden bg-black py-24 text-white">
-
+    <div
+      id="planos"
+      className="relative flex w-full flex-col items-center overflow-hidden bg-black py-24 text-white"
+    >
       {/* Header Badges and Titles */}
       <div className="relative z-10 mb-16 flex flex-col items-center px-4 text-center">
         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-4 py-1.5 mb-6">
@@ -27,8 +29,11 @@ export default function Planos() {
           </span>
         </div>
 
-        <h1 className="font-heading mb-4 max-w-3xl text-4xl font-bold leading-tight  md:text-5xl lg:text-5xl">
-          Eternize sua história <br className="hidden md:block" />{" "}
+        <h1
+          style={{ fontFamily: "Georgia, serif" }}
+          className="mb-4 max-w-3xl text-3xl truncate font-semibold leading-tight md:text-5xl lg:text-5xl"
+        >
+          Eternize sua história <br />{" "}
           <span className="bg-gradient-to-r from-fuchsia-400 to-pink-500 bg-clip-text text-transparent">
             por menos de um lanche
           </span>

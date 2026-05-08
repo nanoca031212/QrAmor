@@ -50,11 +50,16 @@ export default function PerguntasFrequentes() {
   const [openItem, setOpenItem] = useState(0);
 
   return (
-    <section id="faq" className="relative overflow-hidden bg-black px-4 py-24 text-white">
-
+    <section
+      id="faq"
+      className="relative overflow-hidden bg-black px-4 py-24 text-white"
+    >
       <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center">
         <div className="mb-10 text-center">
-          <h2 className="font-heading font-bold text-4xl tracking-tight md:text-5xl">
+          <h2
+            style={{ fontFamily: "Georgia, serif" }}
+            className="text-4xl font-semibold tracking-tight md:text-5xl"
+          >
             Perguntas{" "}
             <span className="bg-gradient-to-r from-fuchsia-400 to-purple-500 bg-clip-text text-transparent">
               Frequentes
