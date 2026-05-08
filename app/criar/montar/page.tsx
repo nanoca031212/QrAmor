@@ -22,6 +22,8 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import DomeGallery, { GalleryImage } from "@/app/components/DomeGallery";
+import { loadStripe } from '@stripe/stripe-js';
+import { set as idbSet } from 'idb-keyval';
 
 type EventoItem = {
   title: string;
@@ -189,6 +191,72 @@ const montagem = () => {
   const [quizScore, setQuizScore] = useState(0);
   const [quizFeedback, setQuizFeedback] = useState<string | null>(null);
   const [isAnimateCorrect, setIsAnimateCorrect] = useState(false);
+
+  // Estados Pagamento
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const handlePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Salvar dados no localStorage para a página de sucesso
+      const tributeData = {
+        answers,
+        uploadedImages,
+        selectedSpotifyTrack,
+        games,
+        specialOpening,
+        selectedBackground,
+        activeTitleColor,
+        messageTextStyle,
+        messageTextSize
+      };
+      await idbSet('mycupid_tribute_data', tributeData);
+
+      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+      
+      if (!stripe) throw new Error('Stripe failed to load');
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            title: currentTitle,
+            song: selectedSpotifyTrack?.name,
+            gamesCount: [games.puzzle.active, games.memory.active, games.quiz.active].filter(Boolean).length,
+          }
+        }),
+      });
+
+      const session = await response.json();
+
+      if (session.error) throw new Error(session.error);
+
+      if (session.url) {
+        window.location.href = session.url;
+      } else {
+        throw new Error('Não foi possível gerar a URL de pagamento.');
+      }
+
+    } catch (err) {
+      console.error('Payment failed:', err);
+      alert('Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Estado Abertura Especial
+  const [specialOpening, setSpecialOpening] = useState({
+    enabled: false,
+    status: 'idle', // 'idle', 'question', 'success', 'denied'
+    image: '/coelho/1.png',
+    message: 'Voce me ama? ❤️',
+    showNoButton: true,
+    isFinished: false,
+    isExiting: false
+  });
 
   // Inicializar Quiz
   const startQuiz = () => {
@@ -426,9 +494,13 @@ const montagem = () => {
       </div>
       <div className="pt-3  px-4">
         <div className="  flex items-center gap-6 px-4">
-          <div className="flex flex-col items-center">
-            <h1>Montar </h1>
-            <h1>Perfil</h1>
+          <div className="flex shrink-0">
+            <img 
+              key={currentStep}
+              src="/Logo.png" 
+              alt="Logo MyCupid" 
+              className="w-20 h-auto object-contain floating-logo animate-in zoom-in-105 duration-500" 
+            />
           </div>
           <div className="space-y-1">
             <h1 className="uppercase text-[10px] tracking-[0.2em] text-white/70 font-bold">
@@ -652,9 +724,10 @@ const montagem = () => {
               <div className="flex items-center mb-3 gap-4">
                 <button
                   type="button"
-                  className="flex w-full flex-col items-center justify-center rounded-2xl border border-[#A04979] bg-white/5 px-4 py-2 text-center transition-colors hover:bg-white/7"
+                  onClick={() => setSpecialOpening(prev => ({ ...prev, enabled: true, status: 'question' }))}
+                  className={`flex w-full flex-col items-center justify-center rounded-2xl border px-4 py-2 text-center transition-all ${specialOpening.enabled ? 'border-[#A04979] bg-fuchsia-500/10 shadow-[0_0_15px_rgba(217,70,239,0.2)]' : 'border-white/10 bg-white/5 hover:bg-white/7'}`}
                 >
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10 text-2xl text-white/80">
+                  <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border text-2xl ${specialOpening.enabled ? 'border-fuchsia-400 text-white' : 'border-white/10 text-white/80'}`}>
                     🐰
                   </div>
                   <h1 className="text-sm font-semibold text-white">
@@ -666,7 +739,8 @@ const montagem = () => {
                 </button>
                 <button
                   type="button"
-                  className="flex w-full flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-center transition-colors hover:bg-white/7"
+                  onClick={() => setSpecialOpening(prev => ({ ...prev, enabled: false, status: 'idle' }))}
+                  className={`flex w-full flex-col items-center justify-center rounded-2xl border px-4 py-2 text-center transition-all ${!specialOpening.enabled ? 'border-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'border-white/10 bg-white/5 hover:bg-white/7'}`}
                 >
                   <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 border border-white/10 text-2xl text-white/80">
                     🌟
@@ -1147,6 +1221,27 @@ const montagem = () => {
                     <p>🔳 QR Code personalizado (qualquer tema)</p>
                     <p>• Jogo "adivinhe a palavra" incluso</p>
                   </div>
+                  <div className="mt-8">
+                    <button
+                      onClick={handlePayment}
+                      disabled={isProcessingPayment}
+                      className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 via-yellow-500 to-violet-600 p-[2px] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                    >
+                      <div className="flex w-full items-center justify-center gap-3 rounded-[calc(1rem-1px)] bg-black/90 py-4 font-black uppercase tracking-widest text-white transition-colors group-hover:bg-transparent">
+                        {isProcessingPayment ? (
+                          <span className="animate-pulse">Processando...</span>
+                        ) : (
+                          <>
+                            Adquirir Plano VIP
+                            <ArrowRight size={18} />
+                          </>
+                        )}
+                      </div>
+                    </button>
+                    <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-white/30">
+                      ✨ Pagamento Seguro via Stripe ✨
+                    </p>
+                  </div>
                 </div>
                 <div className="relative overflow-visible rounded-[1.75rem] border border-fuchsia-400/60 bg-[linear-gradient(180deg,rgba(99,20,66,0.45)_0%,rgba(15,7,22,0.98)_100%)] px-4 pb-5 pt-6 shadow-[0_0_25px_rgba(217,70,239,0.18)]">
                   <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 px-3 py-1 text-center text-[10px] font-black uppercase tracking-wide text-white shadow-lg">
@@ -1400,6 +1495,76 @@ const montagem = () => {
             <div className="absolute top-2 left-1/2 h-5 w-18 -translate-x-1/2 rounded-full bg-[#0C0212] border-[1px] border-zinc-600 sm:h-8 sm:w-40 z-20" />
 
                  <div className={`relative h-full w-full overflow-hidden transition-all duration-700 ${backgrounds.find(bg => bg.id === selectedBackground)?.class || 'bg-[#0C0212]'}`}>
+              
+              {/* Special Opening Overlay */}
+              {specialOpening.enabled && !specialOpening.isFinished && (
+                <div className={`absolute inset-0 z-[100] bg-[#FFF0F5] flex flex-col items-center justify-center p-6 transition-all duration-1000 ${specialOpening.isExiting ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'} ${!specialOpening.isExiting ? 'animate-in fade-in duration-700' : ''}`}>
+                   <div className="w-full max-w-[200px] aspect-square relative mb-8">
+                      <img 
+                        key={specialOpening.image}
+                        src={specialOpening.image} 
+                        alt="Rabbit" 
+                        className="w-full h-full object-contain floating-rabbit animate-in fade-in zoom-in duration-800 fill-mode-both"
+                      />
+                   </div>
+
+                   <h2 key={specialOpening.message} className="text-xl font-bold text-[#E91E63] text-center mb-10 leading-tight italic animate-in slide-in-from-bottom-2 duration-500" style={{ fontFamily: 'Playlist' }}>
+                     {specialOpening.message}
+                   </h2>
+
+                   {specialOpening.status !== 'success' && (
+                     <div className="flex gap-4 w-full animate-in fade-in duration-500">
+                        <button 
+                          onClick={() => {
+                            setSpecialOpening(prev => ({
+                              ...prev,
+                              status: 'success',
+                              image: '/coelho/2.png',
+                              message: 'Eu sabia! 😍',
+                              showNoButton: true
+                            }));
+                            // Start exiting sequence
+                            setTimeout(() => {
+                              setSpecialOpening(prev => ({ ...prev, isExiting: true }));
+                              setTimeout(() => {
+                                setSpecialOpening(prev => ({ ...prev, isFinished: true }));
+                              }, 1000); // Match duration-1000
+                            }, 2000);
+                          }}
+                          className="flex-1 bg-[#4CAF50] text-white py-4 rounded-3xl font-black italic text-sm shadow-[0_8px_0_#2E7D32] active:translate-y-1 active:shadow-[0_4px_0_#2E7D32] transition-all tracking-widest"
+                        >
+                          SIM
+                        </button>
+
+                        {specialOpening.showNoButton && (
+                          <button 
+                            onClick={() => {
+                              setSpecialOpening(prev => ({
+                                ...prev,
+                                status: 'denied',
+                                image: '/coelho/3.png',
+                                message: 'Fala a verdade! 😤',
+                                showNoButton: false
+                              }));
+                            }}
+                            className="flex-1 bg-[#F44336] text-white py-4 rounded-3xl font-black italic text-sm shadow-[0_8px_0_#C62828] active:translate-y-1 active:shadow-[0_4px_0_#C62828] transition-all tracking-widest"
+                          >
+                            NAO
+                          </button>
+                        )}
+                     </div>
+                   )}
+
+                   {/* Reset button for preview purposes if needed */}
+                   <button 
+                    onClick={() => setSpecialOpening(prev => ({ ...prev, status: 'question', image: '/coelho/1.png', message: 'Voce me ama? ❤️', showNoButton: true, isFinished: false, isExiting: false }))}
+                    className="absolute bottom-4 text-[8px] text-[#E91E63]/30 uppercase font-black tracking-tighter"
+                   >
+                     Reset Preview
+                   </button>
+                </div>
+              )}
+
               {/* Layer 1: Fixed Particles Overlay */}
               <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                 {backgrounds.find(bg => bg.id === selectedBackground)?.type !== 'none' && [...Array(backgrounds.find(bg => bg.id === selectedBackground)?.type === 'twinkle' ? 40 : 20)].map((_, i) => {
@@ -1914,6 +2079,22 @@ const montagem = () => {
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; transform: scale(0.8); }
           50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes floating-rabbit {
+          0% { transform: translateY(0) rotate(-2deg); }
+          50% { transform: translateY(-10px) rotate(2deg); }
+          100% { transform: translateY(0) rotate(-2deg); }
+        }
+        @keyframes floating-logo {
+          0% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+          100% { transform: translateY(0); }
+        }
+        .floating-rabbit {
+          animation: floating-rabbit 3s ease-in-out infinite;
+        }
+        .floating-logo {
+          animation: floating-logo 4s ease-in-out infinite;
         }
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
