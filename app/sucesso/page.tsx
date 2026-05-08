@@ -178,19 +178,11 @@ export default function SucessoPage() {
       {/* Abertura Especial Overlay - Viewport Full Width */}
       {openingState?.enabled && !isOpeningFinished && (
         <div className={`fixed inset-0 z-[1000] bg-[#FFF0F5] flex flex-col items-center justify-center p-6 transition-all duration-1000 ${isExiting ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'}`}>
-           <div className="w-full max-w-[280px] aspect-square relative mb-8">
-              <img 
-                key={openingState.image}
-                src={openingState.image} 
-                alt="Rabbit" 
-                className="w-full h-full object-contain floating-rabbit animate-in fade-in zoom-in duration-800 fill-mode-both"
-              />
-           </div>
            <h2 key={openingState.message} className="text-2xl font-bold text-[#E91E63] text-center mb-12 italic px-4" style={{ fontFamily: 'Playlist' }}>
              {openingState.message}
            </h2>
            {openingState.status !== 'success' && (
-             <div className="flex gap-6 w-full max-w-sm animate-in fade-in duration-500">
+             <div className="flex gap-6 w-full max-w-sm mb-12 animate-in fade-in duration-500">
                 <button 
                   onClick={() => {
                     setOpeningState((prev: any) => ({ ...prev, status: 'success', image: '/coelho/2.png', message: 'Eu sabia! 😍' }));
@@ -213,6 +205,14 @@ export default function SucessoPage() {
                 )}
              </div>
            )}
+           <div className="w-full max-w-[280px] aspect-square relative mb-8">
+              <img 
+                key={openingState.image}
+                src={openingState.image} 
+                alt="Rabbit" 
+                className="w-full h-full object-contain floating-rabbit animate-in fade-in zoom-in duration-800 fill-mode-both"
+              />
+           </div>
         </div>
       )}
 

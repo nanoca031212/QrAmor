@@ -922,8 +922,13 @@ const montagem = () => {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const url = URL.createObjectURL(file);
-                            setGames(prev => ({ ...prev, puzzle: { ...prev.puzzle, image: url } }));
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              if (typeof reader.result === 'string') {
+                                setGames(prev => ({ ...prev, puzzle: { ...prev.puzzle, image: reader.result } }));
+                              }
+                            };
+                            reader.readAsDataURL(file);
                           }
                         }}
                       />
@@ -1008,12 +1013,27 @@ const montagem = () => {
                               accept="image/*" 
                               id="memory-upload" 
                               className="hidden" 
-                              onChange={(e) => {
-                                const files = Array.from(e.target.files || []);
-                                const remaining = 6 - games.memory.images.length;
-                                const newImages = files.slice(0, remaining).map(f => URL.createObjectURL(f));
-                                setGames(prev => ({ ...prev, memory: { ...prev.memory, images: [...prev.memory.images, ...newImages] } }));
-                              }}
+                              onChange={async (e) => {
+                                 const files = Array.from(e.target.files || []);
+                                 const remaining = 6 - games.memory.images.length;
+                                 const selectedFiles = files.slice(0, remaining);
+                                 
+                                 const base64Images = await Promise.all(
+                                   selectedFiles.map(file => new Promise<string>((resolve) => {
+                                     const reader = new FileReader();
+                                     reader.onload = () => resolve(reader.result as string);
+                                     reader.readAsDataURL(file);
+                                   }))
+                                 );
+                                 
+                                 setGames(prev => ({ 
+                                   ...prev, 
+                                   memory: { 
+                                     ...prev.memory, 
+                                     images: [...prev.memory.images, ...base64Images] 
+                                   } 
+                                 }));
+                               }}
                             />
                             <label htmlFor="memory-upload" className="aspect-square rounded-2xl border-2 border-dashed border-white/10 bg-white/5 flex flex-col items-center justify-center gap-1 hover:bg-white/10 transition-colors cursor-pointer">
                                <span className="text-lg text-white/40">+</span>
@@ -1617,6 +1637,16 @@ const montagem = () => {
                 </p>
                 
 
+                {currentStep >= 4 && (
+                  <button
+                    onClick={() => setIsDomeOpen(true)}
+                    className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl border border-[#4A2440] bg-[#1E0E1C] px-4 py-2 text-center transition-colors hover:bg-white/5 shadow-lg shadow-fuchsia-900/20"
+                  >
+                    <Eye size={18} className="text-white/80" />
+                    <span className="text-sm font-semibold text-white">Nossa Linha do Tempo</span>
+                  </button>
+                )}
+
                 {uploadedImages.length > 0 && (
                   <div className={`static-carousel flex w-full snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] shrink-0 ${currentStep === 4 ? "mt-2" : "mt-4"}`}>
                     {uploadedImages.map((image, index) => (
@@ -1635,15 +1665,7 @@ const montagem = () => {
                 )}
 
                 {currentStep >= 4 && (
-                  <div className="mt-6 w-full flex flex-col gap-2 shrink-0">
-                    <button
-                      onClick={() => setIsDomeOpen(true)}
-                      className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#4A2440] bg-[#1E0E1C] px-4 py-2 text-center transition-colors hover:bg-white/5 shadow-lg shadow-fuchsia-900/20"
-                    >
-                      <Eye size={18} className="text-white/80" />
-                      <span className="text-sm font-semibold text-white">Nossa Linha do Tempo</span>
-                    </button>
-
+                  <div className="mt-4 w-full flex flex-col gap-2 shrink-0">
                     {(games.puzzle.active || games.memory.active || games.quiz.active) && (
                       <button
                         onClick={() => setIsGameSelectorOpen(true)}
