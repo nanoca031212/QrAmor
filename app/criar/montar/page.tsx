@@ -111,6 +111,8 @@ const montagem = () => {
     italic: false,
     strike: false,
   });
+  const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
+  const previewCarouselRef = useRef<HTMLDivElement>(null);
   const [messageTextSize, setMessageTextSize] = useState<
     "P" | "M" | "G" | "GG"
   >("M");
@@ -251,7 +253,7 @@ const montagem = () => {
   const [specialOpening, setSpecialOpening] = useState({
     enabled: false,
     status: 'idle', // 'idle', 'question', 'success', 'denied'
-    image: '/coelho/1.png',
+    image: '/coelho/um.png',
     message: 'Voce me ama? ❤️',
     showNoButton: true,
     isFinished: false,
@@ -323,6 +325,28 @@ const montagem = () => {
 
   const handlePreviousStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handlePreviewScroll = () => {
+    if (previewCarouselRef.current) {
+      const container = previewCarouselRef.current;
+      const children = container.children;
+      const centerX = container.scrollLeft + container.offsetWidth / 2;
+      
+      let closestIdx = 0;
+      let minDistance = Infinity;
+
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i] as HTMLElement;
+        const childCenter = child.offsetLeft + child.offsetWidth / 2;
+        const distance = Math.abs(centerX - childCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIdx = i;
+        }
+      }
+      setCurrentPhotoIdx(closestIdx);
+    }
   };
 
   const toggleMessageTextStyle = (style: "bold" | "italic" | "strike") => {
@@ -1519,7 +1543,7 @@ const montagem = () => {
               {/* Special Opening Overlay */}
               {specialOpening.enabled && !specialOpening.isFinished && (
                 <div className={`absolute inset-0 z-[100] bg-[#FFF0F5] flex flex-col items-center justify-center p-6 transition-all duration-1000 ${specialOpening.isExiting ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'} ${!specialOpening.isExiting ? 'animate-in fade-in duration-700' : ''}`}>
-                   <div className="w-full max-w-[200px] aspect-square relative mb-8">
+                   <div className="w-full max-w-[200px] aspect-square relative mb-12">
                       <img 
                         key={specialOpening.image}
                         src={specialOpening.image} 
@@ -1528,7 +1552,7 @@ const montagem = () => {
                       />
                    </div>
 
-                   <h2 key={specialOpening.message} className="text-xl font-bold text-[#E91E63] text-center mb-10 leading-tight italic animate-in slide-in-from-bottom-2 duration-500" style={{ fontFamily: 'Playlist' }}>
+                   <h2 key={specialOpening.message} className="text-xl font-bold text-[#E91E63] text-center mb-8 leading-tight italic animate-in slide-in-from-bottom-2 duration-500" style={{ fontFamily: 'Playlist' }}>
                      {specialOpening.message}
                    </h2>
 
@@ -1539,7 +1563,7 @@ const montagem = () => {
                             setSpecialOpening(prev => ({
                               ...prev,
                               status: 'success',
-                              image: '/coelho/2.png',
+                              image: '/coelho/dois.png',
                               message: 'Eu sabia! 😍',
                               showNoButton: true
                             }));
@@ -1562,7 +1586,7 @@ const montagem = () => {
                               setSpecialOpening(prev => ({
                                 ...prev,
                                 status: 'denied',
-                                image: '/coelho/3.png',
+                                image: '/coelho/tres.png',
                                 message: 'Fala a verdade! 😤',
                                 showNoButton: false
                               }));
@@ -1577,7 +1601,7 @@ const montagem = () => {
 
                    {/* Reset button for preview purposes if needed */}
                    <button 
-                    onClick={() => setSpecialOpening(prev => ({ ...prev, status: 'question', image: '/coelho/1.png', message: 'Voce me ama? ❤️', showNoButton: true, isFinished: false, isExiting: false }))}
+                    onClick={() => setSpecialOpening(prev => ({ ...prev, status: 'question', image: '/coelho/um.png', message: 'Voce me ama? ❤️', showNoButton: true, isFinished: false, isExiting: false }))}
                     className="absolute bottom-4 text-[8px] text-[#E91E63]/30 uppercase font-black tracking-tighter"
                    >
                      Reset Preview
@@ -1648,19 +1672,36 @@ const montagem = () => {
                 )}
 
                 {uploadedImages.length > 0 && (
-                  <div className={`static-carousel flex w-full snap-x snap-mandatory gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] shrink-0 ${currentStep === 4 ? "mt-2" : "mt-4"}`}>
-                    {uploadedImages.map((image, index) => (
-                      <div
-                        key={image.id || index}
-                        className="aspect-square min-w-full snap-start overflow-hidden rounded-3xl"
-                      >
-                        <img
-                          src={image.url}
-                          alt={`Foto enviada pelo cliente ${index + 1}`}
-                          className="h-full w-full object-cover"
+                  <div className="w-full flex flex-col items-center">
+                    <div 
+                      ref={previewCarouselRef}
+                      onScroll={handlePreviewScroll}
+                      className={`static-carousel flex w-full snap-x snap-mandatory gap-2 overflow-x-auto [scrollbar-width:none] px-4 shrink-0 ${currentStep === 4 ? "mt-2" : "mt-4"}`}
+                    >
+                      {uploadedImages.map((image, index) => (
+                        <div
+                          key={image.id || index}
+                          className={`aspect-square min-w-[92%] snap-center overflow-hidden rounded-3xl transition-all duration-500 ease-out transform ${
+                            index === currentPhotoIdx ? 'scale-100 opacity-100' : 'scale-[0.85] opacity-40 blur-[1px]'
+                          }`}
+                        >
+                          <img
+                            src={image.url}
+                            alt={`Foto enviada pelo cliente ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {/* Indicators */}
+                    <div className="flex gap-1.5 mt-4">
+                      {uploadedImages.map((_, idx) => (
+                        <div 
+                          key={idx} 
+                          className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentPhotoIdx ? 'w-4 bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'w-1.5 bg-white/20'}`}
                         />
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -2064,7 +2105,7 @@ const montagem = () => {
           </div>
         </div>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-black px-4 py-2 gap-4 flex">
+      <div className="fixed bottom-0 left-0 right-0 z-[150] bg-black px-4 py-2 gap-4 flex">
         <button
           type="button"
           onClick={handlePreviousStep}

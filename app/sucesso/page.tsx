@@ -28,6 +28,10 @@ export default function SucessoPage() {
   const [isAnimateCorrect, setIsAnimateCorrect] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
+  const [isPuzzleSolved, setIsPuzzleSolved] = useState(false);
+  const [isMemorySolved, setIsMemorySolved] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
   
   const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [openingState, setOpeningState] = useState<any>(null);
@@ -41,7 +45,7 @@ export default function SucessoPage() {
           setOpeningState({
             ...savedData.specialOpening,
             status: 'question',
-            image: '/coelho/1.png',
+            image: '/coelho/um.png',
             message: 'Voce me ama? ❤️',
             showNoButton: true,
             isFinished: false,
@@ -57,6 +61,57 @@ export default function SucessoPage() {
     loadData();
   }, []);
 
+  const handleScroll = () => {
+    if (carouselRef.current) {
+      const container = carouselRef.current;
+      const children = container.children;
+      const centerX = container.scrollLeft + container.offsetWidth / 2;
+      
+      let closestIdx = 0;
+      let minDistance = Infinity;
+
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i] as HTMLElement;
+        const childCenter = child.offsetLeft + child.offsetWidth / 2;
+        const distance = Math.abs(centerX - childCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestIdx = i;
+        }
+      }
+      setCurrentPhotoIdx(closestIdx);
+    }
+  };
+
+  const seek = (seconds: number) => {
+    if (youtubeIframeRef.current) {
+      const newTime = Math.max(0, elapsedSeconds + seconds);
+      youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+        event: 'command',
+        func: 'seekTo',
+        args: [newTime, true]
+      }), '*');
+      setElapsedSeconds(newTime);
+    }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isMusicPlaying) {
+      interval = setInterval(() => {
+        setElapsedSeconds(prev => {
+          const duration = data?.selectedSpotifyTrack?.duration || 0;
+          if (duration > 0 && prev >= duration) {
+            setIsMusicPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isMusicPlaying, data?.selectedSpotifyTrack?.duration]);
+
   // Lógica dos Jogos
   const startPuzzle = () => {
     const pieces = Array.from({ length: 9 }, (_, i) => i);
@@ -65,18 +120,25 @@ export default function SucessoPage() {
       [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
     }
     setPuzzlePieces(pieces);
+    setIsPuzzleSolved(false);
     setActiveGame('puzzle');
     setIsGameSelectorOpen(false);
   };
 
   const handlePuzzleClick = (idx: number) => {
-    if (selectedPiece === null) {
+    if (isPuzzleSolved || selectedPiece === null) {
+      if (isPuzzleSolved) return;
       setSelectedPiece(idx);
     } else {
       const newPieces = [...puzzlePieces];
       [newPieces[selectedPiece], newPieces[idx]] = [newPieces[idx], newPieces[selectedPiece]];
       setPuzzlePieces(newPieces);
       setSelectedPiece(null);
+
+      // Check completion
+      if (newPieces.every((p, i) => p === i)) {
+        setIsPuzzleSolved(true);
+      }
     }
   };
 
@@ -94,6 +156,7 @@ export default function SucessoPage() {
     }
     setMemoryCards(cards);
     setFlippedIndices([]);
+    setIsMemorySolved(false);
     setIsMemoryChecking(false);
     setActiveGame('memory');
     setIsGameSelectorOpen(false);
@@ -114,6 +177,11 @@ export default function SucessoPage() {
         newCards[second].isMatched = true;
         setMemoryCards(newCards);
         setFlippedIndices([]);
+        setIsMemoryChecking(false);
+
+        if (newCards.every(c => c.isMatched)) {
+           setIsMemorySolved(true);
+        }
         setIsMemoryChecking(false);
       } else {
         setTimeout(() => {
@@ -178,14 +246,22 @@ export default function SucessoPage() {
       {/* Abertura Especial Overlay - Viewport Full Width */}
       {openingState?.enabled && !isOpeningFinished && (
         <div className={`fixed inset-0 z-[1000] bg-[#FFF0F5] flex flex-col items-center justify-center p-6 transition-all duration-1000 ${isExiting ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'}`}>
-           <h2 key={openingState.message} className="text-2xl font-bold text-[#E91E63] text-center mb-12 italic px-4" style={{ fontFamily: 'Playlist' }}>
+           <div className="w-full max-w-[280px] aspect-square relative mb-12">
+              <img 
+                key={openingState.image}
+                src={openingState.image} 
+                alt="Rabbit" 
+                className="w-full h-full object-contain floating-rabbit animate-in fade-in zoom-in duration-800 fill-mode-both"
+              />
+           </div>
+           <h2 key={openingState.message} className="text-2xl font-bold text-[#E91E63] text-center mb-8 italic px-4" style={{ fontFamily: 'Playlist' }}>
              {openingState.message}
            </h2>
            {openingState.status !== 'success' && (
-             <div className="flex gap-6 w-full max-w-sm mb-12 animate-in fade-in duration-500">
+             <div className="flex gap-6 w-full max-w-sm animate-in fade-in duration-500">
                 <button 
                   onClick={() => {
-                    setOpeningState((prev: any) => ({ ...prev, status: 'success', image: '/coelho/2.png', message: 'Eu sabia! 😍' }));
+                    setOpeningState((prev: any) => ({ ...prev, status: 'success', image: '/coelho/dois.png', message: 'Eu sabia! 😍' }));
                     setTimeout(() => {
                       setIsExiting(true);
                       setTimeout(() => setIsOpeningFinished(true), 1100);
@@ -197,7 +273,7 @@ export default function SucessoPage() {
                 </button>
                 {openingState.showNoButton && (
                   <button 
-                    onClick={() => setOpeningState((prev: any) => ({ ...prev, status: 'denied', image: '/coelho/3.png', message: 'Fala a verdade! 😤', showNoButton: false }))}
+                    onClick={() => setOpeningState((prev: any) => ({ ...prev, status: 'denied', image: '/coelho/tres.png', message: 'Fala a verdade! 😤', showNoButton: false }))}
                     className="flex-1 bg-[#F44336] text-white py-5 rounded-[2rem] font-black italic shadow-[0_10px_0_#C62828] active:translate-y-1 transition-all text-lg tracking-widest"
                   >
                     NAO
@@ -205,14 +281,6 @@ export default function SucessoPage() {
                 )}
              </div>
            )}
-           <div className="w-full max-w-[280px] aspect-square relative mb-8">
-              <img 
-                key={openingState.image}
-                src={openingState.image} 
-                alt="Rabbit" 
-                className="w-full h-full object-contain floating-rabbit animate-in fade-in zoom-in duration-800 fill-mode-both"
-              />
-           </div>
         </div>
       )}
 
@@ -222,7 +290,7 @@ export default function SucessoPage() {
         {/* Content Scrollable */}
         <div className="relative h-full w-full overflow-y-auto overflow-x-hidden scroll-smooth [scrollbar-width:none]">
            <div className="flex flex-col items-center px-6 pt-16 pb-40">
-              <img src="/Logo.png" alt="Logo" className="w-16 mb-8 floating-logo" />
+              <img src="/Logo.png" alt="Logo" className="w-28 mb-10 floating-logo" />
               
               <h1 
                 className="text-4xl text-center font-bold italic tracking-tighter"
@@ -241,12 +309,33 @@ export default function SucessoPage() {
               </button>
 
               {data.uploadedImages.length > 0 && (
-                <div className="mt-10 w-full flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none]">
-                  {data.uploadedImages.map((img: any, idx: number) => (
-                    <div key={idx} className="aspect-square min-w-full snap-start rounded-[2.5rem] overflow-hidden shadow-2xl">
-                       <img src={img.url} className="w-full h-full object-cover" alt="Momentos" />
-                    </div>
-                  ))}
+                <div className="mt-10 w-full flex flex-col items-center">
+                  <div 
+                    ref={carouselRef}
+                    onScroll={handleScroll}
+                    className="w-full flex snap-x snap-mandatory gap-2 overflow-x-auto [scrollbar-width:none] px-4"
+                  >
+                    {data.uploadedImages.map((img: any, idx: number) => (
+                      <div 
+                        key={idx} 
+                        className={`aspect-square min-w-[92%] snap-center rounded-[2.5rem] overflow-hidden shadow-2xl relative transition-all duration-500 ease-out transform ${
+                          idx === currentPhotoIdx ? 'scale-100 opacity-100' : 'scale-[0.85] opacity-40 blur-[2px]'
+                        }`}
+                      >
+                         <img src={img.url} className="w-full h-full object-cover" alt="Momentos" />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Indicators */}
+                  <div className="flex gap-2 mt-6">
+                    {data.uploadedImages.map((_: any, idx: number) => (
+                      <div 
+                        key={idx} 
+                        className={`h-2 rounded-full transition-all duration-300 ${idx === currentPhotoIdx ? 'w-6 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'w-2 bg-white/20'}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -260,32 +349,71 @@ export default function SucessoPage() {
               </div>
 
               {data.selectedSpotifyTrack && (
-                <div className="mt-10 w-full max-w-[240px] bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-6 shadow-2xl">
-                   <div className="relative aspect-square rounded-2xl overflow-hidden mb-4 shadow-xl">
-                      <img src={data.selectedSpotifyTrack.albumArt} className="w-full h-full object-cover" alt="Music" />
+                <div className="mt-10 w-full max-w-[280px] bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl animate-in zoom-in duration-500">
+                   {/* Capa no Topo */}
+                   <div className="relative w-full h-40 overflow-hidden">
+                      <img src={data.selectedSpotifyTrack.albumArt} className="absolute inset-0 w-full h-full object-cover" alt="Capa" />
                       {isMusicPlaying && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                           <div className="flex gap-1">
-                              {[1,2,3,4].map(i => <div key={i} className="w-1 bg-white rounded-full h-4 animate-bounce" style={{ animationDelay: `${i * 0.1}s` }} />)}
-                           </div>
+                        <div className="absolute inset-0 bg-black/20 flex items-end justify-start p-3 gap-1">
+                           {[1,2,3,4].map(i => (
+                             <div 
+                               key={i} 
+                               className="w-1 bg-white rounded-full"
+                               style={{ 
+                                 height: `${12 + (i % 2 === 0 ? 10 : 5)}px`,
+                                 animation: `eq-bounce ${0.4 + i * 0.1}s ease-in-out infinite alternate`
+                               }}
+                             />
+                           ))}
                         </div>
                       )}
                    </div>
-                   <div className="text-center mb-6">
-                      <h3 className="text-white font-bold truncate px-2 text-sm">{data.selectedSpotifyTrack.name}</h3>
-                      <p className="text-[10px] text-white/50 uppercase tracking-widest mt-1">{data.selectedSpotifyTrack.artist}</p>
+
+                   <div className="p-5 flex flex-col gap-4">
+                      {/* Info */}
+                      <div className="flex justify-between items-start">
+                         <div className="flex flex-col overflow-hidden pr-2 flex-1">
+                            <span className="text-white font-bold text-sm leading-tight line-clamp-1">{data.selectedSpotifyTrack.name}</span>
+                            <span className="text-white/60 text-[10px] mt-1 truncate uppercase tracking-widest">{data.selectedSpotifyTrack.artist}</span>
+                         </div>
+                         <Heart size={16} className="text-white/40 shrink-0 mt-0.5" />
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="flex flex-col gap-1.5">
+                         <div className="h-[2px] w-full bg-white/10 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-white transition-all duration-300" 
+                              style={{ width: `${(elapsedSeconds / (data.selectedSpotifyTrack.duration || 1)) * 100}%` }}
+                            />
+                         </div>
+                         <div className="flex justify-between text-[9px] text-white/30 font-medium tracking-wider">
+                            <span>{Math.floor(elapsedSeconds / 60)}:{Math.floor(elapsedSeconds % 60).toString().padStart(2, '0')}</span>
+                            <span>{Math.floor((data.selectedSpotifyTrack.duration || 0) / 60)}:{Math.floor((data.selectedSpotifyTrack.duration || 0) % 60).toString().padStart(2, '0')}</span>
+                         </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="flex justify-between items-center px-2">
+                         <button onClick={() => seek(-10)} className="text-white/40 hover:text-white transition-colors">
+                           <SkipBack size={18} fill="currentColor" />
+                         </button>
+                         <button 
+                           onClick={() => setIsMusicPlaying(!isMusicPlaying)} 
+                           className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 transition-transform active:scale-95"
+                         >
+                            {isMusicPlaying ? <X size={20} /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+                         </button>
+                         <button onClick={() => seek(10)} className="text-white/40 hover:text-white transition-colors">
+                           <SkipForward size={18} fill="currentColor" />
+                         </button>
+                      </div>
                    </div>
-                   <div className="flex items-center justify-center gap-6">
-                      <SkipBack size={20} className="text-white/30" />
-                      <button onClick={() => setIsMusicPlaying(!isMusicPlaying)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black hover:scale-105 transition-transform">
-                         {isMusicPlaying ? <X size={20} /> : <Play size={20} fill="black" className="ml-1" />}
-                      </button>
-                      <SkipForward size={20} className="text-white/30" />
-                   </div>
+
                    {isMusicPlaying && (
                      <iframe
                         ref={youtubeIframeRef}
-                        src={`https://www.youtube.com/embed/${data.selectedSpotifyTrack.id}?autoplay=1&rel=0&controls=0`}
+                        src={`https://www.youtube.com/embed/${data.selectedSpotifyTrack.id}?autoplay=1&rel=0&controls=1&enablejsapi=1`}
                         allow="autoplay"
                         className="hidden"
                      />
@@ -330,40 +458,64 @@ export default function SucessoPage() {
                {activeGame === 'puzzle' ? '🧩 Quebra-Cabeça' : activeGame === 'memory' ? '🧠 Jogo da Memória' : '❓ Quiz Especial'}
              </h2>
 
+             {isPuzzleSolved && (
+               <div className="flex flex-col items-center mb-8 animate-in fade-in zoom-in duration-700">
+                  <div className="w-16 h-16 bg-fuchsia-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(217,70,239,0.5)] animate-bounce">
+                    <Check size={32} className="text-white" />
+                  </div>
+                  <h3 className="text-3xl font-black text-white italic mb-2" style={{ fontFamily: 'Playlist' }}>Parabéns!</h3>
+                  <p className="text-white/70 text-center text-sm">Você montou nossa foto com perfeição! ❤️</p>
+               </div>
+             )}
+
+             {isMemorySolved && (
+               <div className="flex flex-col items-center mb-8 animate-in fade-in zoom-in duration-700">
+                  <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-bounce">
+                    <Check size={32} className="text-white" />
+                  </div>
+                  <h3 className="text-3xl font-black text-white italic mb-2" style={{ fontFamily: 'Playlist' }}>Incrível!</h3>
+                  <p className="text-white/70 text-center text-sm">Sua memória é impecável! ❤️</p>
+               </div>
+             )}
+
              {activeGame === 'puzzle' && (
-               <div className="w-full aspect-square grid grid-cols-3 gap-1 bg-white/5 p-1 rounded-2xl border border-white/10">
-                  {puzzlePieces.map((p, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => handlePuzzleClick(i)}
-                      className={`relative aspect-square overflow-hidden transition-all ${selectedPiece === i ? 'ring-2 ring-fuchsia-500 z-10' : ''}`}
-                    >
-                      <img 
-                        src={data.games.puzzle.image} 
-                        className="absolute w-[300%] h-[300%] object-cover max-w-none"
-                        style={{ left: `-${(p % 3) * 100}%`, top: `-${Math.floor(p / 3) * 100}%` }}
-                      />
-                    </button>
-                  ))}
+               <div className="w-full flex flex-col items-center">
+                 <div className="w-full aspect-square grid grid-cols-3 gap-1 bg-white/5 p-1 rounded-2xl border border-white/10 relative overflow-hidden">
+                   {puzzlePieces.map((p, i) => (
+                     <button 
+                       key={i} 
+                       onClick={() => handlePuzzleClick(i)}
+                       className={`relative aspect-square overflow-hidden transition-all ${selectedPiece === i ? 'ring-2 ring-fuchsia-500 z-10' : ''}`}
+                     >
+                       <img 
+                         src={data.games.puzzle.image} 
+                         className="absolute w-[300%] h-[300%] object-cover max-w-none"
+                         style={{ left: `-${(p % 3) * 100}%`, top: `-${Math.floor(p / 3) * 100}%` }}
+                       />
+                     </button>
+                   ))}
+                 </div>
                </div>
              )}
 
              {activeGame === 'memory' && (
-               <div className="w-full grid grid-cols-3 gap-3">
-                  {memoryCards.map((card, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => handleMemoryClick(i)}
-                      className={`aspect-square relative perspective-1000 transition-all duration-500 ${card.isFlipped ? 'rotate-y-180' : ''}`}
-                    >
-                      <div className={`absolute inset-0 bg-white/10 rounded-xl border border-white/20 flex items-center justify-center transition-all backface-hidden ${card.isFlipped ? 'opacity-0' : 'opacity-100'}`}>
-                        <Heart className="text-white/20" />
-                      </div>
-                      <div className={`absolute inset-0 rounded-xl overflow-hidden border border-fuchsia-500/50 backface-hidden rotate-y-180 ${card.isFlipped ? 'opacity-100' : 'opacity-0'}`}>
-                        <img src={card.url} className="w-full h-full object-cover" />
-                      </div>
-                    </button>
-                  ))}
+               <div className="w-full flex flex-col items-center">
+                 <div className="w-full grid grid-cols-3 gap-3 relative">
+                   {memoryCards.map((card, i) => (
+                     <button 
+                       key={i} 
+                       onClick={() => handleMemoryClick(i)}
+                       className={`aspect-square relative perspective-1000 transition-all duration-500 ${card.isFlipped ? 'rotate-y-180' : ''}`}
+                     >
+                       <div className={`absolute inset-0 bg-white/10 rounded-xl border border-white/20 flex items-center justify-center transition-all backface-hidden ${card.isFlipped ? 'opacity-0' : 'opacity-100'}`}>
+                         <Heart className="text-white/20" />
+                       </div>
+                       <div className={`absolute inset-0 rounded-xl overflow-hidden border border-fuchsia-500/50 backface-hidden rotate-y-180 ${card.isFlipped ? 'opacity-100' : 'opacity-0'}`}>
+                         <img src={card.url} className="w-full h-full object-cover" />
+                       </div>
+                     </button>
+                   ))}
+                 </div>
                </div>
              )}
 
@@ -403,7 +555,19 @@ export default function SucessoPage() {
                   )}
                </div>
              )}
-             <button onClick={() => setActiveGame(null)} className="mt-auto mb-10 text-white/40 uppercase text-[10px] font-black tracking-widest">Encerrar Jogo</button>
+
+             {(isPuzzleSolved || isMemorySolved) && (
+                <button 
+                  onClick={() => setActiveGame(null)} 
+                  className="mt-12 w-full py-4 bg-white text-black font-black uppercase tracking-widest rounded-full shadow-lg shadow-white/10 animate-in slide-in-from-bottom-4 duration-700"
+                >
+                  Voltar para a Homenagem
+                </button>
+             )}
+
+             {!isPuzzleSolved && !isMemorySolved && activeGame !== 'quiz' && (
+                <button onClick={() => setActiveGame(null)} className="mt-auto mb-10 text-white/40 uppercase text-[10px] font-black tracking-widest">Encerrar Jogo</button>
+             )}
           </div>
         )}
 
