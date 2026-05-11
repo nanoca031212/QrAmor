@@ -35,6 +35,7 @@ export default function SucessoPage() {
   
   const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [openingState, setOpeningState] = useState<any>(null);
+  const [volume, setVolume] = useState(30);
 
   useEffect(() => {
     const loadData = async () => {
@@ -111,6 +112,57 @@ export default function SucessoPage() {
     }
     return () => clearInterval(interval);
   }, [isMusicPlaying, data?.selectedSpotifyTrack?.duration]);
+
+  useEffect(() => {
+    if (data?.selectedSpotifyTrack && isOpeningFinished) {
+      setIsMusicPlaying(true);
+    }
+  }, [data?.selectedSpotifyTrack, isOpeningFinished]);
+
+  useEffect(() => {
+    const sendVolume = () => {
+      if (youtubeIframeRef.current) {
+        youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'setVolume',
+          args: [volume]
+        }), '*');
+      }
+    };
+    sendVolume();
+    if (isMusicPlaying) {
+      const timer = setTimeout(sendVolume, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [volume, isMusicPlaying]);
+
+  useEffect(() => {
+    if (youtubeIframeRef.current) {
+      const command = isMusicPlaying ? 'playVideo' : 'pauseVideo';
+      youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+        event: 'command',
+        func: command,
+        args: []
+      }), '*');
+    }
+  }, [isMusicPlaying]);
+
+  const restartMusic = () => {
+    if (youtubeIframeRef.current) {
+      youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+        event: 'command',
+        func: 'seekTo',
+        args: [0, true]
+      }), '*');
+      youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+        event: 'command',
+        func: 'playVideo',
+        args: []
+      }), '*');
+      setIsMusicPlaying(true);
+      setElapsedSeconds(0);
+    }
+  };
 
   // Lógica dos Jogos
   const startPuzzle = () => {
@@ -398,27 +450,53 @@ export default function SucessoPage() {
                          <button onClick={() => seek(-10)} className="text-white/40 hover:text-white transition-colors">
                            <SkipBack size={18} fill="currentColor" />
                          </button>
-                         <button 
-                           onClick={() => setIsMusicPlaying(!isMusicPlaying)} 
-                           className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 transition-transform active:scale-95"
-                         >
-                            {isMusicPlaying ? <X size={20} /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
-                         </button>
+                          <button 
+                            onClick={() => {
+                              if (!isOpeningFinished) return;
+                              setIsMusicPlaying(!isMusicPlaying);
+                            }} 
+                            className={`w-12 h-12 bg-white rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 transition-transform active:scale-95 ${!isOpeningFinished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                             {isMusicPlaying ? (
+                               <div className="flex gap-1">
+                                 <div className="w-1.5 h-4 bg-black rounded-full" />
+                                 <div className="w-1.5 h-4 bg-black rounded-full" />
+                               </div>
+                             ) : (
+                               <Play size={20} fill="currentColor" className="ml-0.5" />
+                             )}
+                          </button>
                          <button onClick={() => seek(10)} className="text-white/40 hover:text-white transition-colors">
                            <SkipForward size={18} fill="currentColor" />
                          </button>
                       </div>
                    </div>
 
-                   {isMusicPlaying && (
-                     <iframe
-                        ref={youtubeIframeRef}
-                        src={`https://www.youtube.com/embed/${data.selectedSpotifyTrack.id}?autoplay=1&rel=0&controls=1&enablejsapi=1`}
-                        allow="autoplay"
-                        className="hidden"
-                     />
-                   )}
-                </div>
+                    {data?.selectedSpotifyTrack && (
+                      <iframe
+                         ref={youtubeIframeRef}
+                         src={`https://www.youtube.com/embed/${data.selectedSpotifyTrack.id}?autoplay=1&rel=0&controls=0&enablejsapi=1`}
+                         allow="autoplay"
+                         className="hidden"
+                      />
+                    )}
+
+                    {/* Volume Control */}
+                    <div className="px-5 pb-5">
+                      <div className="flex items-center gap-3">
+                        <Music size={12} className="text-white/40" />
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={volume}
+                          onChange={(e) => setVolume(Number(e.target.value))}
+                          className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white"
+                        />
+                        <span className="text-[9px] text-white/30 w-5">{volume}%</span>
+                      </div>
+                    </div>
+                 </div>
               )}
            </div>
         </div>

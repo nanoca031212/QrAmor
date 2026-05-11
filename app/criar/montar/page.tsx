@@ -102,6 +102,37 @@ const item: EventoItem[] = [
   },
 ];
 
+// Helper to compress images to a max dimension to avoid huge payloads
+const compressImage = (base64Str: string, maxDimension = 1000): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxDimension) {
+          height *= maxDimension / width;
+          width = maxDimension;
+        }
+      } else {
+        if (height > maxDimension) {
+          width *= maxDimension / height;
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", 0.7)); // JPEG with 70% quality
+    };
+  });
+};
+
 const montagem = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => item.map(() => ""));
@@ -483,9 +514,10 @@ const montagem = () => {
         (file) =>
           new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
               if (typeof reader.result === "string") {
-                resolve(reader.result);
+                const compressed = await compressImage(reader.result);
+                resolve(compressed);
               } else {
                 reject(new Error("Falha ao carregar imagem"));
               }
@@ -1149,13 +1181,14 @@ const montagem = () => {
                           const file = e.target.files?.[0];
                           if (file) {
                             const reader = new FileReader();
-                            reader.onload = () => {
+                            reader.onload = async () => {
                               if (typeof reader.result === "string") {
+                                const compressed = await compressImage(reader.result);
                                 setGames((prev) => ({
                                   ...prev,
                                   puzzle: {
                                     ...prev.puzzle,
-                                    image: reader.result as string,
+                                    image: compressed,
                                   },
                                 }));
                               }
@@ -1310,8 +1343,10 @@ const montagem = () => {
                                     (file) =>
                                       new Promise<string>((resolve) => {
                                         const reader = new FileReader();
-                                        reader.onload = () =>
-                                          resolve(reader.result as string);
+                                        reader.onload = async () => {
+                                          const compressed = await compressImage(reader.result as string);
+                                          resolve(compressed);
+                                        };
                                         reader.readAsDataURL(file);
                                       }),
                                   ),
@@ -2672,11 +2707,18 @@ const montagem = () => {
         </button>
         <button
           type="button"
-          onClick={handleNextStep}
-          disabled={currentStep === item.length - 1}
-          className="flex w-[60%] items-center justify-center gap-4 border border-white bg-white py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => {
+            if (currentStep === item.length - 1) {
+              // Scroll to plans or just show an alert
+              const container = document.querySelector('.overflow-y-auto');
+              container?.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            } else {
+              handleNextStep();
+            }
+          }}
+          className="flex w-[60%] items-center justify-center gap-4 border border-white bg-white py-3 font-semibold text-black active:scale-95 transition-all"
         >
-          Continuar
+          {currentStep === item.length - 1 ? "Finalizar" : "Continuar"}
           <ArrowRight size={18} />
         </button>
       </div>

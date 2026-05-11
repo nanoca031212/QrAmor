@@ -20,12 +20,15 @@ export default function MinhasPaginasClient({ initialPages, user }: MinhasPagina
   const { data: session } = useSession();
   const router = useRouter();
   const [pages, setPages] = useState<any[]>(initialPages);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     const syncPendingData = async () => {
       try {
         const pendingData = await idbGet("mycupid_tribute_data");
         if (pendingData) {
+          setIsSyncing(true);
           const res = await fetch("/api/pages", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -47,10 +50,20 @@ export default function MinhasPaginasClient({ initialPages, user }: MinhasPagina
             if (Array.isArray(updatedPages)) {
               setPages(updatedPages);
             }
+          } else {
+            const errData = await res.json();
+            if (res.status === 413) {
+              setSyncError("As fotos são muito grandes. Tente criar uma nova página com menos fotos.");
+            } else {
+              setSyncError(errData.error || "Erro ao salvar sua página.");
+            }
           }
         }
       } catch (err) {
         console.error("Erro ao sincronizar página pendente:", err);
+        setSyncError("Erro de conexão ao salvar sua página.");
+      } finally {
+        setIsSyncing(false);
       }
     };
 
@@ -91,7 +104,35 @@ export default function MinhasPaginasClient({ initialPages, user }: MinhasPagina
       </header>
 
       {/* Content */}
-      <div className="mx-auto max-w-5xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-8">
+        {isSyncing && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 py-3.5 animate-pulse">
+            <Heart size={20} className="text-fuchsia-400 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-fuchsia-300">
+                Sincronizando sua página...
+              </p>
+              <p className="text-xs text-fuchsia-400/70 mt-0.5">
+                Quase lá! Estamos salvando sua nova criação na sua conta.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {syncError && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3.5">
+            <div className="h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black shrink-0">!</div>
+            <div>
+              <p className="text-sm font-bold text-red-300">
+                Ops! Ocorreu um problema ao salvar.
+              </p>
+              <p className="text-xs text-red-400/70 mt-0.5">
+                {syncError}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Page title row */}
         <div className="flex items-start justify-between mb-10">
           <div>

@@ -58,7 +58,7 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [trackDuration, setTrackDuration] = useState(0);
-  const [volume, setVolume] = useState(100);
+  const [volume, setVolume] = useState(30);
   const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Quiz state
@@ -125,23 +125,58 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
   }, [isMusicPlaying, trackDuration]);
 
   useEffect(() => {
-    if (selectedSpotifyTrack) {
+    if (selectedSpotifyTrack && specialOpening.isFinished) {
       const ms = selectedSpotifyTrack.duration || 180000;
       setTrackDuration(ms);
       setElapsedSeconds(0);
       setIsMusicPlaying(true);
     }
-  }, [selectedSpotifyTrack]);
+  }, [selectedSpotifyTrack, specialOpening.isFinished]);
+
+  useEffect(() => {
+    const sendVolume = () => {
+      if (youtubeIframeRef.current) {
+        youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'setVolume',
+          args: [volume]
+        }), '*');
+      }
+    };
+    sendVolume();
+    if (isMusicPlaying) {
+      const timer = setTimeout(sendVolume, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [volume, isMusicPlaying]);
 
   useEffect(() => {
     if (youtubeIframeRef.current) {
+      const command = isMusicPlaying ? 'playVideo' : 'pauseVideo';
       youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
         event: 'command',
-        func: 'setVolume',
-        args: [volume]
+        func: command,
+        args: []
       }), '*');
     }
-  }, [volume, isMusicPlaying]);
+  }, [isMusicPlaying]);
+
+  const restartMusic = () => {
+    if (youtubeIframeRef.current) {
+      youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+        event: 'command',
+        func: 'seekTo',
+        args: [0, true]
+      }), '*');
+      youtubeIframeRef.current.contentWindow?.postMessage(JSON.stringify({
+        event: 'command',
+        func: 'playVideo',
+        args: []
+      }), '*');
+      setIsMusicPlaying(true);
+      setElapsedSeconds(0);
+    }
+  };
 
   const startMemory = () => {
     if (!games.memory.images || games.memory.images.length < 3) return;
@@ -396,7 +431,7 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
 
           {selectedSpotifyTrack && (
             <div className="mt-12 w-full max-w-[300px] bg-black/60 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-2xl mb-8 border border-white/10 flex flex-col shrink-0">
-              {isMusicPlaying && (
+              {selectedSpotifyTrack && (
                 <iframe
                   ref={youtubeIframeRef}
                   src={`https://www.youtube.com/embed/${selectedSpotifyTrack.id}?autoplay=1&rel=0&controls=0&enablejsapi=1`}
@@ -434,12 +469,23 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
                 </div>
 
                 <div className="flex justify-between items-center px-2">
-                  <SkipBack size={20} className="text-white/40 hover:text-white transition-colors" />
-                  <button onClick={() => setIsMusicPlaying((prev) => !prev)} className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+                  <button onClick={restartMusic} title="Reiniciar" className="text-white/40 hover:text-white transition-colors">
+                    <Repeat size={18} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (!specialOpening.isFinished) return;
+                      setIsMusicPlaying((prev) => !prev);
+                    }} 
+                    className={`w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform ${!specialOpening.isFinished ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
                     {isMusicPlaying ? (
-                      <X size={20} className="text-black" />
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-5 bg-black rounded-full" />
+                        <div className="w-1.5 h-5 bg-black rounded-full" />
+                      </div>
                     ) : (
-                      <Play size={20} className="text-black ml-1" fill="currentColor" />
+                      <Play size={22} className="text-black ml-1" fill="currentColor" />
                     )}
                   </button>
                   <SkipForward size={20} className="text-white/40 hover:text-white transition-colors" />

@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Este e-mail já está cadastrado. Faça login." }, { status: 409 });
     }
 
-    // Criptografa a senha com bcrypt (12 rounds)
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Criptografa a senha com bcrypt (10 rounds)
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
       data: {
