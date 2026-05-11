@@ -5,31 +5,57 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-01-27.acacia' as any,
 });
 
+const PLANS: Record<string, { name: string; description: string; amount: number }> = {
+  vip: {
+    name: 'MyCupid VIP 💎',
+    description: 'Tudo liberado — edições ilimitadas, QR Code, mensagem de voz e mais.',
+    amount: 3499, // R$ 34,99
+  },
+  avancado: {
+    name: 'MyCupid Avançado ✨',
+    description: 'Joguinhos, música, intros especiais e galeria completa.',
+    amount: 2490, // R$ 24,90
+  },
+  basico: {
+    name: 'MyCupid Básico',
+    description: 'Página dedicada, galeria de fotos, contador e linha do tempo.',
+    amount: 1990, // R$ 19,90
+  },
+};
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { metadata } = body;
+    const { plan = 'vip', metadata } = body;
+
+    const selectedPlan = PLANS[plan] ?? PLANS.vip;
+    const origin = req.headers.get('origin');
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'], // Adicione 'pix' se a conta Stripe brasileira suportar no modo test
+      payment_method_types: ['card'],
+      billing_address_collection: 'auto',
       line_items: [
         {
           price_data: {
             currency: 'brl',
             product_data: {
-              name: 'MyCupid VIP - Homenagem Especial',
-              description: 'Acesso completo com músicas, jogos, fotos e abertura especial.',
+              name: selectedPlan.name,
+              description: selectedPlan.description,
               images: ['https://mycupid.com.br/Logo.png'],
             },
-            unit_amount: 3499, // R$ 34,99
+            unit_amount: selectedPlan.amount,
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/sucesso?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/criar/montar`,
-      metadata: metadata,
+      // Após pagar, vai para /registro com o session_id para pré-preencher o email
+      success_url: `${origin}/registro?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/criar/montar`,
+      metadata: {
+        ...metadata,
+        plan,
+      },
     });
 
     return NextResponse.json({ id: session.id, url: session.url });
@@ -38,3 +64,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Heart, Menu, X } from "lucide-react";
+import { Heart, Menu, X, BookHeart } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const navItems = [
   { label: "Início", href: "#inicio" },
@@ -14,6 +15,7 @@ const navItems = [
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,8 +49,9 @@ const Header = () => {
       }`}
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 lg:px-0">
-        <Link href="#inicio" className="text-3xl text-red-500">
-          <span className="font-extrabold uppercase text-white">Qr</span>doAmor
+        <Link href="/" className="flex items-center gap-2">
+          <img src="/Logo.png" alt="MyCupid" className="w-9 h-auto object-contain" />
+          <span className="font-bold text-white text-xl">MyCupid</span>
         </Link>
 
         <nav className="hidden items-center gap-3 md:flex">
@@ -64,13 +67,23 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:block">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_45%,#a855f7_100%)] px-5 py-2 text-base font-semibold text-white shadow-[0_8px_24px_rgba(139,92,246,0.28)] transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_28px_rgba(168,85,247,0.34)]"
-          >
-            <Heart size={16} className="text-white/90" />
-            Minha Conta
-          </Link>
+          {session ? (
+            <Link
+              href="/minhas-paginas"
+              className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_45%,#a855f7_100%)] px-5 py-2 text-base font-semibold text-white shadow-[0_8px_24px_rgba(139,92,246,0.28)] transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_28px_rgba(168,85,247,0.34)]"
+            >
+              <BookHeart size={16} className="text-white/90" />
+              Minhas páginas
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-[linear-gradient(90deg,#7c3aed_0%,#8b5cf6_45%,#a855f7_100%)] px-5 py-2 text-base font-semibold text-white shadow-[0_8px_24px_rgba(139,92,246,0.28)] transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_28px_rgba(168,85,247,0.34)]"
+            >
+              <Heart size={16} className="text-white/90" />
+              Minha Conta
+            </Link>
+          )}
         </div>
 
         <button
@@ -100,14 +113,25 @@ const Header = () => {
               ))}
             </nav>
 
-            <Link
-              href="/criar"
-              onClick={() => setIsMenuOpen(false)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-3 text-base font-medium text-white transition-transform duration-300 hover:scale-[1.01]"
-            >
-              <Heart size={18} />
-              Criar minha página
-            </Link>
+            {session ? (
+              <Link
+                href="/minhas-paginas"
+                onClick={() => setIsMenuOpen(false)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(90deg,#7c3aed_0%,#a855f7_100%)] px-4 py-3 text-base font-medium text-white transition-transform duration-300 hover:scale-[1.01]"
+              >
+                <BookHeart size={18} />
+                Minhas páginas
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setIsMenuOpen(false)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-500 px-4 py-3 text-base font-medium text-white transition-transform duration-300 hover:scale-[1.01]"
+              >
+                <Heart size={18} />
+                Criar minha página
+              </Link>
+            )}
           </div>
         </div>
       )}
