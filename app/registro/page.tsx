@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 
-export default function RegistroPage() {
+function RegistroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
@@ -266,3 +266,16 @@ export default function RegistroPage() {
     </main>
   );
 }
+
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-fuchsia-500 animate-spin" />
+      </div>
+    }>
+      <RegistroContent />
+    </Suspense>
+  );
+}
+
