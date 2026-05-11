@@ -45,7 +45,7 @@ export default function SucessoPage() {
           setOpeningState({
             ...savedData.specialOpening,
             status: 'question',
-            image: '/coelho/um.png',
+            image: '/Coelho/um.png',
             message: 'Voce me ama? ❤️',
             showNoButton: true,
             isFinished: false,
@@ -261,7 +261,7 @@ export default function SucessoPage() {
              <div className="flex gap-6 w-full max-w-sm animate-in fade-in duration-500">
                 <button 
                   onClick={() => {
-                    setOpeningState((prev: any) => ({ ...prev, status: 'success', image: '/coelho/dois.png', message: 'Eu sabia! 😍' }));
+                    setOpeningState((prev: any) => ({ ...prev, status: 'success', image: '/Coelho/dois.png', message: 'Eu sabia! 😍' }));
                     setTimeout(() => {
                       setIsExiting(true);
                       setTimeout(() => setIsOpeningFinished(true), 1100);
@@ -273,7 +273,7 @@ export default function SucessoPage() {
                 </button>
                 {openingState.showNoButton && (
                   <button 
-                    onClick={() => setOpeningState((prev: any) => ({ ...prev, status: 'denied', image: '/coelho/tres.png', message: 'Fala a verdade! 😤', showNoButton: false }))}
+                    onClick={() => setOpeningState((prev: any) => ({ ...prev, status: 'denied', image: '/Coelho/tres.png', message: 'Fala a verdade! 😤', showNoButton: false }))}
                     className="flex-1 bg-[#F44336] text-white py-5 rounded-[2rem] font-black italic shadow-[0_10px_0_#C62828] active:translate-y-1 transition-all text-lg tracking-widest"
                   >
                     NAO

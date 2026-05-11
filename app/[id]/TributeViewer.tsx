@@ -34,7 +34,7 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
     "status" | "showNoButton" | "isFinished" | "isExiting"
   > = {
     enabled: false,
-    image: "/coelho/um.png",
+    image: "/Coelho/um.png",
     message: "Você me ama? ❤️",
     ...(data.specialOpening || {})
   };
@@ -293,7 +293,7 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
                     setSpecialOpening((prev) => ({
                       ...prev,
                       status: "success",
-                      image: "/coelho/dois.png",
+                      image: "/Coelho/dois.png",
                       message: "Eu sabia! 😍",
                       showNoButton: true,
                     }));
@@ -314,7 +314,7 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
                       setSpecialOpening((prev) => ({
                         ...prev,
                         status: "denied",
-                        image: "/coelho/tres.png",
+                        image: "/Coelho/tres.png",
                         message: "Fala a verdade! 😤",
                         showNoButton: false,
                       }));

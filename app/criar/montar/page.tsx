@@ -272,7 +272,7 @@ const montagem = () => {
   const [specialOpening, setSpecialOpening] = useState({
     enabled: false,
     status: "idle", // 'idle', 'question', 'success', 'denied'
-    image: "/coelho/um.png",
+    image: "/Coelho/um.png",
     message: "Voce me ama? ❤️",
     showNoButton: true,
     isFinished: false,
@@ -1954,7 +1954,7 @@ const montagem = () => {
                           setSpecialOpening((prev) => ({
                             ...prev,
                             status: "success",
-                            image: "/coelho/dois.png",
+                            image: "/Coelho/dois.png",
                             message: "Eu sabia! 😍",
                             showNoButton: true,
                           }));
@@ -1983,7 +1983,7 @@ const montagem = () => {
                             setSpecialOpening((prev) => ({
                               ...prev,
                               status: "denied",
-                              image: "/coelho/tres.png",
+                              image: "/Coelho/tres.png",
                               message: "Fala a verdade! 😤",
                               showNoButton: false,
                             }));
@@ -2002,7 +2002,7 @@ const montagem = () => {
                       setSpecialOpening((prev) => ({
                         ...prev,
                         status: "question",
-                        image: "/coelho/um.png",
+                        image: "/Coelho/um.png",
                         message: "Voce me ama? ❤️",
                         showNoButton: true,
                         isFinished: false,
