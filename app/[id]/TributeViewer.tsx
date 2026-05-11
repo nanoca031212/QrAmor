@@ -4,6 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { Eye, Gamepad2, Puzzle, CircleHelp, Heart, Play, SkipBack, SkipForward, Repeat, ArrowLeft, X, Check, Volume2 } from "lucide-react";
 import DomeGallery from "@/app/components/DomeGallery";
 
+type SpecialOpeningState = {
+  enabled: boolean;
+  image: string;
+  message: string;
+  status: "question" | "success" | "denied";
+  showNoButton: boolean;
+  isFinished: boolean;
+  isExiting: boolean;
+};
+
 export default function TributeViewer({ initialData }: { initialData: any }) {
   const data = initialData || {};
   
@@ -19,14 +29,17 @@ export default function TributeViewer({ initialData }: { initialData: any }) {
   const activeTitleColor = data.activeTitleColor || "#FFFFFF";
   const messageTextStyle = data.messageTextStyle || { bold: false, italic: false, strike: false };
   const messageTextSize = data.messageTextSize || "M";
-  const initialSpecialOpening = {
+  const initialSpecialOpening: Omit<
+    SpecialOpeningState,
+    "status" | "showNoButton" | "isFinished" | "isExiting"
+  > = {
     enabled: false,
     image: "/coelho/um.png",
     message: "Você me ama? ❤️",
     ...(data.specialOpening || {})
   };
 
-  const [specialOpening, setSpecialOpening] = useState({
+  const [specialOpening, setSpecialOpening] = useState<SpecialOpeningState>({
     ...initialSpecialOpening,
     status: "question",
     showNoButton: true,
