@@ -35,6 +35,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
     } else {
+      setSuccess("Login realizado com sucesso! Redirecionando...");
       router.push("/minhas-paginas");
     }
   };
