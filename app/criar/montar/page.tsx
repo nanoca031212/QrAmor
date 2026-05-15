@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Calendar,
   Camera,
+  CheckCircle2,
   CircleHelp,
   Eye,
   Gamepad2,
@@ -97,6 +98,10 @@ const item: EventoItem[] = [
     subtitle: "Buscar nome da musica ou artista",
   },
   {
+    title: "✨ Qual QR Code você quer?",
+    subtitle: "Escolha o design que mais combina com seu presente",
+  },
+  {
     title: "Quase pronto! 🎉 Escolhe o plano que combina com o que você quer.",
     subtitle: "Buscar nome da musica ou artista",
   },
@@ -167,6 +172,13 @@ const montagem = () => {
   const [selectedBackground, setSelectedBackground] =
     useState<string>("default");
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const qrCodeOptions = [
+    { id: "classico", name: "Clássico", price: "GRÁTIS" },
+    { id: "juntos", name: "Juntos para Sempre", price: "R$ 3,90" },
+    { id: "gatinho", name: "Te Amo Gatinho", price: "R$ 3,90" },
+  ];
+  const [selectedQrStyle, setSelectedQrStyle] = useState("classico");
 
   // Estados dos Jogos
   const [games, setGames] = useState({
@@ -255,6 +267,7 @@ const montagem = () => {
         activeTitleColor,
         messageTextStyle,
         messageTextSize,
+        selectedQrStyle,
       };
       await idbSet("mycupid_tribute_data", tributeData);
 
@@ -269,10 +282,12 @@ const montagem = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plan,
+          qrStyle: selectedQrStyle,
           metadata: {
-            title: currentTitle,
+            title: answers[1],
             song: selectedSpotifyTrack?.name,
             plan,
+            qrStyle: selectedQrStyle,
             gamesCount: [
               games.puzzle.active,
               games.memory.active,
@@ -1613,6 +1628,88 @@ const montagem = () => {
               </div>
             )}
             {currentStep === 9 && (
+              <div className="bg-[#0C0212] rounded-[2rem] p-4  mb-3 border border-white/5 flex flex-col gap-6 animate-in fade-in zoom-in duration-500">
+                {/* Header do Card */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">✨</span>
+                    <h3 className="font-bold text-white text-lg tracking-tight">QR Code Personalizado</h3>
+                  </div>
+                  <span className="bg-purple-900/40 text-purple-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-purple-500/20">
+                    Destaque
+                  </span>
+                </div>
+
+                {/* Carousel Horizontal */}
+                <div className="flex gap-4 overflow-x-auto [scrollbar-width:none]  -mx-2 px-2 snap-x">
+                  {qrCodeOptions.map((qr) => (
+                    <button
+                      key={qr.id}
+                      type="button"
+                      onClick={() => setSelectedQrStyle(qr.id)}
+                      className={`relative flex flex-col w-[180px] shrink-0 rounded-[1.5rem] overflow-hidden border-2 transition-all snap-center ${
+                        selectedQrStyle === qr.id
+                          ? "border-fuchsia-600 shadow-[0_0_20px_rgba(192,38,211,0.2)]"
+                          : "border-white/5 bg-[#140818]"
+                      }`}
+                    >
+                      {/* Top Area (White/Design) */}
+                      <div className="h-[200px] bg-white p-4 flex items-center justify-center relative">
+                        {/* Placeholder para o design do QR code */}
+                        {qr.id === "classico" && (
+                          <div className="w-full h-full border border-black/5 flex items-center justify-center p-2">
+                             <div className="w-24 h-24 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MyCupid')] bg-contain bg-center bg-no-repeat"></div>
+                          </div>
+                        )}
+                        {qr.id === "juntos" && (
+                          <div className="w-full h-full bg-pink-50 flex flex-col items-center justify-center p-2 text-center relative">
+                             <span className="text-[10px] text-red-500 font-bold mb-1 italic">JUNTOS PARA SEMPRE</span>
+                             <div className="w-24 h-24 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Love&color=800000')] bg-contain bg-center bg-no-repeat"></div>
+                             <div className="absolute top-2 left-2 text-red-400">❤️</div>
+                             <div className="absolute top-2 right-2 text-red-400">❤️</div>
+                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                               <img src="https://img.icons8.com/color/48/love-message.png" className="w-6" alt="cute" />
+                             </div>
+                          </div>
+                        )}
+                        {qr.id === "gatinho" && (
+                          <div className="w-full h-full bg-white flex flex-col items-center justify-center p-2 text-center relative overflow-hidden">
+                             <span className="text-[10px] text-fuchsia-600 font-bold mb-1 italic">TE AMO GATINHO</span>
+                             <div className="w-24 h-24 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Kitten&color=FF00FF')] bg-contain bg-center bg-no-repeat"></div>
+                             <div className="absolute -bottom-1 -right-1 opacity-20">🐾</div>
+                             <div className="absolute top-1 left-1 opacity-20">🐾</div>
+                          </div>
+                        )}
+
+                        {/* Checkmark corner */}
+                        {selectedQrStyle === qr.id && (
+                          <div className="absolute top-2 right-2 text-fuchsia-600 bg-white rounded-full">
+                            <CheckCircle2 size={24} fill="currentColor" className="text-white" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom Area (Dark) */}
+                      <div className="p-4 bg-[#140818] flex flex-col gap-3">
+                        <span className="text-[10px] text-white/50 font-medium truncate">{qr.name}</span>
+                        <div className={`w-full py-2 rounded-xl text-center text-xs font-black uppercase tracking-widest border transition-all ${
+                          selectedQrStyle === qr.id
+                            ? "bg-fuchsia-600/20 border-fuchsia-500 text-fuchsia-400"
+                            : "bg-white/5 border-white/10 text-white/40"
+                        }`}>
+                          {qr.price}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-xs text-white/30 text-center font-medium">
+                  Deslize para ver mais opções →
+                </p>
+              </div>
+            )}
+            {currentStep === 10 && (
               <div className="mb-4 flex flex-col gap-6">
                 {/* Card VIP */}
                 <button
@@ -1640,6 +1737,9 @@ const montagem = () => {
                       <p className="text-xs font-bold text-white/30 line-through">R$ 49,99</p>
                       <p className="text-3xl font-black leading-none text-white">R$ 34,99</p>
                       <p className="mt-1 text-xs font-bold text-emerald-400">Economize R$ 15,00</p>
+                      <p className="mt-1 text-[9px] font-black uppercase tracking-widest text-white/40">
+                         {selectedQrStyle === 'classico' ? '+ QR Code Gratuito' : '+ QR Code Incluído'}
+                      </p>
                     </div>
                   </div>
 
@@ -1683,7 +1783,9 @@ const montagem = () => {
 
                     <div className="text-right">
                       <p className="text-3xl font-black leading-none text-white">R$ 24,90</p>
-                      <p className="mt-1 text-xs font-bold text-white/45">+ add-ons opcionais</p>
+                      <p className="mt-1 text-[9px] font-black uppercase tracking-widest text-fuchsia-400/80">
+                         {selectedQrStyle === 'classico' ? '+ QR Code Gratuito' : '+ QR Code R$ 3,90'}
+                      </p>
                     </div>
                   </div>
 
@@ -1700,40 +1802,6 @@ const montagem = () => {
 
                   <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-fuchsia-500/15 border border-fuchsia-400/30 py-2.5 text-xs font-black uppercase tracking-widest text-fuchsia-300">
                     {isProcessingPayment ? <span className="animate-pulse">Processando...</span> : <><span>Escolher Avançado</span> <ArrowRight size={14} /></>}
-                  </div>
-                </button>
-
-                {/* Card Básico */}
-                <button
-                  type="button"
-                  onClick={() => handlePayment("basico")}
-                  disabled={isProcessingPayment}
-                  className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(35,19,44,0.45)_0%,rgba(12,8,20,0.98)_100%)] px-4 pb-5 pt-5 text-left transition-all active:scale-[0.98] hover:border-white/20 disabled:opacity-60"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="text-2xl font-black text-white">Básico</span>
-                      <p className="mt-1 text-xs font-semibold text-white/75">O essencial pra emocionar</p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-2xl font-black leading-none text-white">R$ 19,90</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-md border border-yellow-500/25 bg-yellow-500/10 px-3 py-2 text-sm font-bold text-yellow-200">
-                    ⏰ Expira em 25 horas
-                  </div>
-
-                  <div className="mt-4 space-y-2.5 text-sm font-medium text-white/90">
-                    <p>• Página dedicada com título e mensagem</p>
-                    <p>• Galeria de fotos (até 10)</p>
-                    <p>• Contador de tempo juntos</p>
-                    <p>• Linha do tempo dos momentos</p>
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-white/8 border border-white/10 py-2.5 text-xs font-black uppercase tracking-widest text-white/60">
-                    {isProcessingPayment ? <span className="animate-pulse">Processando...</span> : <><span>Escolher Básico</span> <ArrowRight size={14} /></>}
                   </div>
                 </button>
               </div>
@@ -1861,7 +1929,8 @@ const montagem = () => {
               currentStep !== 6 &&
               currentStep !== 7 &&
               currentStep !== 8 &&
-              currentStep !== 9 && (
+              currentStep !== 9 &&
+              currentStep !== 10 && (
                 <>
                   <input
                     type="text"
@@ -1955,11 +2024,68 @@ const montagem = () => {
             }`}
           >
             {/* Camera cutout */}
-            <div className="absolute top-2 left-1/2 h-5 w-18 -translate-x-1/2 rounded-full bg-[#0C0212] border-[1px] border-zinc-600 sm:h-8 sm:w-40 z-20" />
+            <div className="absolute top-2 left-1/2 h-5 w-18 -translate-x-1/2 rounded-full bg-[#0C0212] border-[1px] border-zinc-600 sm:h-8 sm:w-40 z-90" />
 
             <div
               className={`relative h-full w-full overflow-hidden transition-all duration-700 ${backgrounds.find((bg) => bg.id === selectedBackground)?.class || "bg-[#0C0212]"}`}
             >
+              {/* QR Code Full Preview (Passo 9) */}
+              {currentStep === 9 && (
+                 <div className="absolute inset-0 z-[60] animate-in fade-in duration-700">
+                    {/* Background do QR Code selecionado */}
+                    {selectedQrStyle === "classico" && (
+                      <div className="w-full h-full bg-white flex flex-col items-center justify-center p-12">
+                         <div className="w-full aspect-square bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MyCupid')] bg-contain bg-center bg-no-repeat mb-10"></div>
+                         <p className="text-[10px] text-black/40 font-black uppercase tracking-[0.3em] text-center">SEU QR CODE CLÁSSICO</p>
+                      </div>
+                    )}
+                    {selectedQrStyle === "juntos" && (
+                      <div className="w-full h-full bg-pink-50 flex flex-col items-center justify-center p-10 relative overflow-hidden">
+                         <h2 className="text-2xl text-red-500 font-bold mb-8 italic tracking-tight" style={{ fontFamily: 'Playlist' }}>Juntos para Sempre</h2>
+                         <div className="w-full aspect-square bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Love&color=800000')] bg-contain bg-center bg-no-repeat mb-10"></div>
+                         <p className="text-[10px] text-red-500/60 font-black uppercase tracking-[0.3em] text-center">SEU QR CODE JUNTOS</p>
+                         
+                         {/* Hearts scattered */}
+                         {[...Array(12)].map((_, i) => (
+                           <div 
+                             key={i} 
+                             className="absolute text-red-400/40 animate-pulse" 
+                             style={{ 
+                               top: `${Math.random() * 100}%`, 
+                               left: `${Math.random() * 100}%`,
+                               fontSize: `${10 + Math.random() * 20}px`,
+                               animationDelay: `${Math.random() * 2}s`
+                             }}
+                           >
+                             ❤️
+                           </div>
+                         ))}
+                      </div>
+                    )}
+                    {selectedQrStyle === "gatinho" && (
+                      <div className="w-full h-full bg-white flex flex-col items-center justify-center p-10 relative overflow-hidden">
+                         <h2 className="text-2xl text-fuchsia-600 font-bold mb-8 italic tracking-tight" style={{ fontFamily: 'Playlist' }}>Te amo Gatinho</h2>
+                         <div className="w-full aspect-square bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Kitten&color=FF00FF')] bg-contain bg-center bg-no-repeat mb-10"></div>
+                         <p className="text-[10px] text-fuchsia-600/60 font-black uppercase tracking-[0.3em] text-center">SEU QR CODE GATINHO</p>
+                         
+                         {/* Paws scattered */}
+                         {[...Array(8)].map((_, i) => (
+                           <div 
+                             key={i} 
+                             className="absolute opacity-5 text-4xl" 
+                             style={{ 
+                               top: `${Math.random() * 100}%`, 
+                               left: `${Math.random() * 100}%`,
+                               transform: `rotate(${Math.random() * 360}deg)`,
+                             }}
+                           >
+                             🐾
+                           </div>
+                         ))}
+                      </div>
+                    )}
+                 </div>
+              )}
               {/* Special Opening Overlay */}
               {specialOpening.enabled && !specialOpening.isFinished && (
                 <div
@@ -2289,6 +2415,7 @@ const montagem = () => {
                     </div>
                   </div>
                 )}
+
               </div>
 
               {/* Game Selector Overlay - stays on top of scrollable content */}
