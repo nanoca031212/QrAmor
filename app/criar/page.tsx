@@ -9,11 +9,12 @@ import {
 import Link from "next/link";
 
 const directOptions = [
-  { label: "Mãe", icon: Heart, color: "text-pink-300" },
-  { label: "Avó/Avô", icon: Sparkles, color: "text-yellow-300" },
-  { label: "Filho/filha", icon: Heart, color: "text-yellow-300" },
-  { label: "Esposa/o", icon: UserRound, color: "text-violet-300" },
-  { label: "Outro", icon: Sparkles, color: "text-fuchsia-300" },
+  { label: "Mãe", icon: Heart, color: "text-pink-300", tipo: "mae" },
+  { label: "Pai", icon: UserRound, color: "text-blue-300", tipo: "pai" },
+  { label: "Avó/Avô", icon: Sparkles, color: "text-yellow-300", tipo: "avo" },
+  { label: "Filho/filha", icon: Heart, color: "text-yellow-300", tipo: "filho" },
+  { label: "Esposa/o", icon: UserRound, color: "text-violet-300", tipo: "esposa" },
+  { label: "Outro", icon: Sparkles, color: "text-fuchsia-300", tipo: "outro" },
 ];
 
 const Criacao = () => {
@@ -44,31 +45,7 @@ const Criacao = () => {
         </div>
 
         <div className="flex w-full flex-col gap-6">
-          <Link href="/criar/montar">
-            <button
-              type="button"
-              className="group relative w-full rounded-[1.7rem] border border-pink-500/30 bg-pink-500/8 px-5 py-5 text-left shadow-[0_0_40px_rgba(236,72,153,0.10)] transition-all hover:border-pink-400/40 hover:bg-pink-500/10"
-            >
-              <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
-                Dia das Mães
-              </span>
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-pink-300/20 bg-pink-500/12 text-4xl text-pink-300">
-                  🌸
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white">
-                    Presente para Mãe
-                  </h2>
-                  <p className="mt-1 text-sm text-white/50">
-                    Homenageie quem sempre esteve por você
-                  </p>
-                </div>
-                <ChevronRight className="text-white/35 transition-transform group-hover:translate-x-1 group-hover:text-white" />
-              </div>
-            </button>
-          </Link>
-          <Link href="/criar/montar">
+          <Link href="/criar/montar?tipo=amor">
             <button
               type="button"
               className="group relative w-full rounded-[1.7rem] border border-fuchsia-500/30 bg-fuchsia-500/8 px-5 py-5 text-left shadow-[0_0_40px_rgba(168,85,247,0.08)] transition-all hover:border-fuchsia-400/40 hover:bg-fuchsia-500/10"
@@ -92,8 +69,32 @@ const Criacao = () => {
               </div>
             </button>
           </Link>
+          <Link href="/criar/montar?tipo=mae">
+            <button
+              type="button"
+              className="group relative w-full rounded-[1.7rem] border border-pink-500/30 bg-pink-500/8 px-5 py-5 text-left shadow-[0_0_40px_rgba(236,72,153,0.10)] transition-all hover:border-pink-400/40 hover:bg-pink-500/10"
+            >
+              <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                Dia das Mães
+              </span>
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-pink-300/20 bg-pink-500/12 text-4xl text-pink-300">
+                  🌸
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-white">
+                    Presente para Mãe
+                  </h2>
+                  <p className="mt-1 text-sm text-white/50">
+                    Homenageie quem sempre esteve por você
+                  </p>
+                </div>
+                <ChevronRight className="text-white/35 transition-transform group-hover:translate-x-1 group-hover:text-white" />
+              </div>
+            </button>
+          </Link>
 
-          <Link href="/criar/montar">
+          <Link href="/criar/montar?tipo=amiga">
             <button
               type="button"
               className="group relative w-full rounded-[1.7rem] border border-orange-500/25 bg-orange-500/7 px-5 py-5 text-left shadow-[0_0_40px_rgba(249,115,22,0.06)] transition-all hover:border-orange-400/35 hover:bg-orange-500/10"
@@ -128,8 +129,8 @@ const Criacao = () => {
         </div>
 
         <div className="mt-6 flex w-full flex-wrap items-center justify-center gap-3">
-          {directOptions.map(({ label, icon: Icon, color }) => (
-            <Link key={label} href="/criar/montar">
+          {directOptions.map(({ label, icon: Icon, color, tipo }) => (
+            <Link key={label} href={`/criar/montar?tipo=${tipo}`}>
               <button
                 key={label}
                 type="button"
@@ -141,13 +142,15 @@ const Criacao = () => {
             </Link>
           ))}
 
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/75 transition-all hover:border-white/15 hover:bg-white/[0.07] hover:text-white"
-          >
-            <Users className="text-sky-300" size={14} />
-            Para amigos
-          </button>
+          <Link href="/criar/montar?tipo=amigos">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/75 transition-all hover:border-white/15 hover:bg-white/[0.07] hover:text-white"
+            >
+              <Users className="text-sky-300" size={14} />
+              Para amigos
+            </button>
+          </Link>
         </div>
 
         <p className="mt-10 text-xs text-white/30">

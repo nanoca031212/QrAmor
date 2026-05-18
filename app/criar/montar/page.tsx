@@ -21,7 +21,8 @@ import {
   SkipForward,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import DomeGallery, { GalleryImage } from "@/app/components/DomeGallery";
 import { loadStripe } from "@stripe/stripe-js";
 import { set as idbSet } from "idb-keyval";
@@ -44,6 +45,134 @@ const titleColorOptions = [
   "#A78BFA",
 ];
 
+// ─────────────────────────────────────────────
+// Sugestões dinâmicas por tipo de homenagem
+// ─────────────────────────────────────────────
+type TipoHomenagem =
+  | "amor"
+  | "mae"
+  | "pai"
+  | "amiga"
+  | "avo"
+  | "filho"
+  | "esposa"
+  | "amigos"
+  | "outro";
+
+const suggestionsByTipo: Record<
+  TipoHomenagem,
+  { titles: string[]; msgPlaceholder: string; photoStep: string; musicStep: string }
+> = {
+  amor: {
+    titles: [
+      "Você é meu lugar favorito 💕",
+      "Para o amor da minha vida ❤️",
+      "Tudo de bom que tenho é você 🥰",
+    ],
+    msgPlaceholder:
+      "Escreve o que você sente… aquele texto sincero que vai fazer a pessoa chorar de amor 💕",
+    photoStep:
+      "Hora das fotos 📸 — escolhe aqueles momentos especiais dos dois!",
+    musicStep: "Tem uma música que lembra vocês dois? 🎶 Cola aqui.",
+  },
+  mae: {
+    titles: [
+      "Para a melhor mãe do mundo 🌸",
+      "Mãe, te amo ❤️",
+      "Você é meu lar, minha força 💐",
+    ],
+    msgPlaceholder:
+      "Mãe, eu nunca vou conseguir colocar em palavras o quanto você significa pra mim…",
+    photoStep:
+      "Hora das fotos 📸 — escolhe aquelas fotos que mostram tudo que viveram juntos!",
+    musicStep: "Tem uma música que lembra a sua mãe? 🎶 Cola aqui.",
+  },
+  pai: {
+    titles: [
+      "Para o melhor pai do mundo 👨‍👦",
+      "Pai, meu herói e exemplo ❤️",
+      "Meu pai, meu porto seguro 👔",
+    ],
+    msgPlaceholder:
+      "Pai, eu nunca vou conseguir colocar em palavras o quanto você significa pra mim e o orgulho que tenho...",
+    photoStep:
+      "Hora das fotos 📸 — escolhe aquelas fotos incríveis com o seu pai!",
+    musicStep: "Tem uma música que lembra o seu pai? 🎶 Cola aqui.",
+  },
+  amiga: {
+    titles: [
+      "Pra minha melhor amiga de sempre 🧡",
+      "Obrigada por tudo, amiga 💛",
+      "Você torna tudo mais divertido 🥳",
+    ],
+    msgPlaceholder:
+      "Escreve aqui tudo que você nunca falou pra ela, mas sempre sentiu… vai ser inesquecível!",
+    photoStep:
+      "Hora das fotos 📸 — escolhe aqueles momentos inesquecíveis de vocês!",
+    musicStep: "Qual música lembra as duas juntas? 🎶 Cola aqui.",
+  },
+  avo: {
+    titles: [
+      "Para a vovó mais especial do mundo 💛",
+      "Vovô, você é minha base 🌻",
+      "Amor de avó não tem igual 🤍",
+    ],
+    msgPlaceholder:
+      "Escreve uma mensagem cheia de amor e gratidão para esse ser tão especial… 💜",
+    photoStep:
+      "Hora das fotos 📸 — escolhe momentos especiais com essa pessoa tão amada!",
+    musicStep: "Tem uma música que lembra a sua avó/avô? 🎶 Cola aqui.",
+  },
+  filho: {
+    titles: [
+      "Meu maior orgulho és tu 🌟",
+      "Para meu filho lindo e amado 💙",
+      "Você é tudo o que eu pedi 🥹",
+    ],
+    msgPlaceholder:
+      "Escreve tudo que você sente por esse filho ou filha amado(a)… vai ser demais! 🤩",
+    photoStep:
+      "Hora das fotos 📸 — escolhe os momentos mais especiais com seu filho ou filha!",
+    musicStep: "Tem uma música que lembra seu filho ou filha? 🎶 Cola aqui.",
+  },
+  esposa: {
+    titles: [
+      "Para minha esposa linda e amada 💍",
+      "Meu companheiro(a) de vida 🤍",
+      "Com você, tudo faz sentido ❤️",
+    ],
+    msgPlaceholder:
+      "Escreve aquela mensagem que vem do fundo do coração… ela(e) vai chorar de alegria! 💕",
+    photoStep:
+      "Hora das fotos 📸 — escolhe os momentos mais marcantes dos dois!",
+    musicStep: "Qual música mais lembra o amor de vocês? 🎶 Cola aqui.",
+  },
+  amigos: {
+    titles: [
+      "Pro meu amigo de sempre 🤝",
+      "Você é a família que eu escolhi 💛",
+      "Com você, toda hora é boa hora 😄",
+    ],
+    msgPlaceholder:
+      "Escreve uma mensagem pra deixar esse amigo sem palavras… vai fazer o dia dele! 🧡",
+    photoStep:
+      "Hora das fotos 📸 — escolhe as melhores memórias com seu amigo!",
+    musicStep: "Tem uma música que lembra a galera? 🎶 Cola aqui.",
+  },
+  outro: {
+    titles: [
+      "Uma homenagem especial pra você 🌟",
+      "Obrigado por fazer parte da minha vida 💫",
+      "Você merece todo esse carinho 🥰",
+    ],
+    msgPlaceholder:
+      "Escreve uma mensagem sincera e cheia de carinho… vai tocar muito o coração! 💜",
+    photoStep:
+      "Hora das fotos 📸 — escolhe aquelas fotos que mostram tudo que viveram!",
+    musicStep: "Tem uma música que lembra essa pessoa especial? 🎶 Cola aqui.",
+  },
+};
+
 const item: EventoItem[] = [
   {
     title:
@@ -52,10 +181,14 @@ const item: EventoItem[] = [
       "Crie seu perfil para que os usuários possam conhecer o seu perfil",
   },
   {
-    title: "Ah, batata dioce! 🌷 Como você quer titular essa homenagem?",
+    title: "🌷 Como você quer titular essa homenagem?",
     subtitle:
       "Crie seu perfil para que os usuários possam conhecer o seu perfil",
-    suggestionTitles: ["Para a melhor mãe do mundo", "Mãe, te amo 🌸"],
+    suggestionTitles: [
+      "Para a melhor mãe do mundo",
+      "Mãe, te amo 🌸",
+      "Meu mundo é você ❤",
+    ],
     titleColorOptions: titleColorOptions,
   },
   {
@@ -97,10 +230,10 @@ const item: EventoItem[] = [
       "Quer adicionar joguinhos interativos? 🎮 Deixa a página ainda mais especial.",
     subtitle: "Buscar nome da musica ou artista",
   },
-  {
-    title: "✨ Qual QR Code você quer?",
-    subtitle: "Escolha o design que mais combina com seu presente",
-  },
+  // {
+  //   title: "✨ Qual QR Code você quer?",
+  //   subtitle: "Escolha o design que mais combina com seu presente",
+  // },
   {
     title: "Quase pronto! 🎉 Escolhe o plano que combina com o que você quer.",
     subtitle: "Buscar nome da musica ou artista",
@@ -108,7 +241,10 @@ const item: EventoItem[] = [
 ];
 
 // Helper to compress images to a max dimension to avoid huge payloads
-const compressImage = (base64Str: string, maxDimension = 1000): Promise<string> => {
+const compressImage = (
+  base64Str: string,
+  maxDimension = 1000,
+): Promise<string> => {
   return new Promise((resolve) => {
     const img = new Image();
     img.src = base64Str;
@@ -138,7 +274,11 @@ const compressImage = (base64Str: string, maxDimension = 1000): Promise<string> 
   });
 };
 
-const montagem = () => {
+const MontagemContent = () => {
+  const searchParams = useSearchParams();
+  const tipo = (searchParams.get("tipo") as TipoHomenagem) ?? "amor";
+  const tipoData = suggestionsByTipo[tipo] ?? suggestionsByTipo.amor;
+
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>(() => item.map(() => ""));
   const [activeTitleColor, setActiveTitleColor] = useState("#FFFFFF");
@@ -377,10 +517,16 @@ const montagem = () => {
 
   const currentItem = item[currentStep];
   const currentAnswer = answers[currentStep] ?? "";
-  const currentTitle =
-    currentStep === 1 && answers[0]
-      ? `${answers[0]}, ah, batata dioce! 🌷 Como você quer titular essa homenagem?`
-      : currentItem.title;
+  let currentTitle = currentItem.title;
+  if (currentStep === 1 && answers[0]) {
+    currentTitle = `${answers[0]}, ah, batata dioce! 🌷 Como você quer titular essa homenagem?`;
+  } else if (currentStep === 3) {
+    const nome = answers[0] || "ela";
+    currentTitle = `Hora das fotos 📸 — escolhe aquelas fotos marcantes de vocês. ${nome} vai chorar!`;
+  } else if (currentStep === 6) {
+    const nome = answers[0] || "essa pessoa";
+    currentTitle = `Tem uma música que lembra muito ${nome}? 🎶 Cola aqui — música certa arrepia na hora.`;
+  }
   const progressWidth = `${((currentStep + 1) / item.length) * 100}%`;
 
   // Helper: formata segundos em M:SS
@@ -657,7 +803,7 @@ const montagem = () => {
           </div>
         </div>
         <div className="flex w-full gap-3 overflow-x-auto py-3 text-sm">
-          {(currentItem.suggestionTitles ?? []).map((title) => (
+          {(currentStep === 1 ? tipoData.titles : currentItem.suggestionTitles ?? []).map((title) => (
             <button
               key={title}
               type="button"
@@ -769,7 +915,7 @@ const montagem = () => {
                   </div>
                 </div>
                 <textarea
-                  placeholder={currentItem.subtitle}
+                  placeholder={tipoData.msgPlaceholder || currentItem.subtitle}
                   maxLength={2000}
                   value={currentAnswer}
                   onChange={(event) => handleAnswerChange(event.target.value)}
@@ -1198,7 +1344,9 @@ const montagem = () => {
                             const reader = new FileReader();
                             reader.onload = async () => {
                               if (typeof reader.result === "string") {
-                                const compressed = await compressImage(reader.result);
+                                const compressed = await compressImage(
+                                  reader.result,
+                                );
                                 setGames((prev) => ({
                                   ...prev,
                                   puzzle: {
@@ -1359,7 +1507,10 @@ const montagem = () => {
                                       new Promise<string>((resolve) => {
                                         const reader = new FileReader();
                                         reader.onload = async () => {
-                                          const compressed = await compressImage(reader.result as string);
+                                          const compressed =
+                                            await compressImage(
+                                              reader.result as string,
+                                            );
                                           resolve(compressed);
                                         };
                                         reader.readAsDataURL(file);
@@ -1627,89 +1778,8 @@ const montagem = () => {
                 </div>
               </div>
             )}
+            {/* {currentStep === 9 && ( ... QR Code menu ... )} */}
             {currentStep === 9 && (
-              <div className="bg-[#0C0212] rounded-[2rem] p-4  mb-3 border border-white/5 flex flex-col gap-6 animate-in fade-in zoom-in duration-500">
-                {/* Header do Card */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">✨</span>
-                    <h3 className="font-bold text-white text-lg tracking-tight">QR Code Personalizado</h3>
-                  </div>
-                  <span className="bg-purple-900/40 text-purple-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-purple-500/20">
-                    Destaque
-                  </span>
-                </div>
-
-                {/* Carousel Horizontal */}
-                <div className="flex gap-4 overflow-x-auto [scrollbar-width:none]  -mx-2 px-2 snap-x">
-                  {qrCodeOptions.map((qr) => (
-                    <button
-                      key={qr.id}
-                      type="button"
-                      onClick={() => setSelectedQrStyle(qr.id)}
-                      className={`relative flex flex-col w-[180px] shrink-0 rounded-[1.5rem] overflow-hidden border-2 transition-all snap-center ${
-                        selectedQrStyle === qr.id
-                          ? "border-fuchsia-600 shadow-[0_0_20px_rgba(192,38,211,0.2)]"
-                          : "border-white/5 bg-[#140818]"
-                      }`}
-                    >
-                      {/* Top Area (White/Design) */}
-                      <div className="h-[200px] bg-white p-4 flex items-center justify-center relative">
-                        {/* Placeholder para o design do QR code */}
-                        {qr.id === "classico" && (
-                          <div className="w-full h-full border border-black/5 flex items-center justify-center p-2">
-                             <div className="w-24 h-24 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MyCupid')] bg-contain bg-center bg-no-repeat"></div>
-                          </div>
-                        )}
-                        {qr.id === "juntos" && (
-                          <div className="w-full h-full bg-pink-50 flex flex-col items-center justify-center p-2 text-center relative">
-                             <span className="text-[10px] text-red-500 font-bold mb-1 italic">JUNTOS PARA SEMPRE</span>
-                             <div className="w-24 h-24 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Love&color=800000')] bg-contain bg-center bg-no-repeat"></div>
-                             <div className="absolute top-2 left-2 text-red-400">❤️</div>
-                             <div className="absolute top-2 right-2 text-red-400">❤️</div>
-                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-                               <img src="https://img.icons8.com/color/48/love-message.png" className="w-6" alt="cute" />
-                             </div>
-                          </div>
-                        )}
-                        {qr.id === "gatinho" && (
-                          <div className="w-full h-full bg-white flex flex-col items-center justify-center p-2 text-center relative overflow-hidden">
-                             <span className="text-[10px] text-fuchsia-600 font-bold mb-1 italic">TE AMO GATINHO</span>
-                             <div className="w-24 h-24 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=Kitten&color=FF00FF')] bg-contain bg-center bg-no-repeat"></div>
-                             <div className="absolute -bottom-1 -right-1 opacity-20">🐾</div>
-                             <div className="absolute top-1 left-1 opacity-20">🐾</div>
-                          </div>
-                        )}
-
-                        {/* Checkmark corner */}
-                        {selectedQrStyle === qr.id && (
-                          <div className="absolute top-2 right-2 text-fuchsia-600 bg-white rounded-full">
-                            <CheckCircle2 size={24} fill="currentColor" className="text-white" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Bottom Area (Dark) */}
-                      <div className="p-4 bg-[#140818] flex flex-col gap-3">
-                        <span className="text-[10px] text-white/50 font-medium truncate">{qr.name}</span>
-                        <div className={`w-full py-2 rounded-xl text-center text-xs font-black uppercase tracking-widest border transition-all ${
-                          selectedQrStyle === qr.id
-                            ? "bg-fuchsia-600/20 border-fuchsia-500 text-fuchsia-400"
-                            : "bg-white/5 border-white/10 text-white/40"
-                        }`}>
-                          {qr.price}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                <p className="text-xs text-white/30 text-center font-medium">
-                  Deslize para ver mais opções →
-                </p>
-              </div>
-            )}
-            {currentStep === 10 && (
               <div className="mb-4 flex flex-col gap-6">
                 {/* Card VIP */}
                 <button
@@ -1725,7 +1795,9 @@ const montagem = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-1">
-                        <span className="text-2xl font-black text-yellow-300">VIP</span>
+                        <span className="text-2xl font-black text-yellow-300">
+                          VIP
+                        </span>
                         <span className="text-sm text-yellow-300">💎</span>
                       </div>
                       <p className="mt-1 text-xs font-semibold text-white/80">
@@ -1734,11 +1806,17 @@ const montagem = () => {
                     </div>
 
                     <div className="text-right">
-                      <p className="text-xs font-bold text-white/30 line-through">R$ 49,99</p>
-                      <p className="text-3xl font-black leading-none text-white">R$ 34,99</p>
-                      <p className="mt-1 text-xs font-bold text-emerald-400">Economize R$ 15,00</p>
+                      <p className="text-xs font-bold text-white/30 line-through">
+                        R$ 49,99
+                      </p>
+                      <p className="text-3xl font-black leading-none text-white">
+                        R$ 34,99
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-emerald-400">
+                        Economize R$ 15,00
+                      </p>
                       <p className="mt-1 text-[9px] font-black uppercase tracking-widest text-white/40">
-                         {selectedQrStyle === 'classico' ? '+ QR Code Gratuito' : '+ QR Code Incluído'}
+                    
                       </p>
                     </div>
                   </div>
@@ -1757,7 +1835,13 @@ const montagem = () => {
                   </div>
 
                   <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-yellow-400/15 border border-yellow-400/30 py-2.5 text-xs font-black uppercase tracking-widest text-yellow-300">
-                    {isProcessingPayment ? <span className="animate-pulse">Processando...</span> : <><span>Escolher VIP</span> <ArrowRight size={14} /></>}
+                    {isProcessingPayment ? (
+                      <span className="animate-pulse">Processando...</span>
+                    ) : (
+                      <>
+                        <span>Escolher VIP</span> <ArrowRight size={14} />
+                      </>
+                    )}
                   </div>
                 </button>
 
@@ -1775,16 +1859,22 @@ const montagem = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-1">
-                        <span className="text-2xl font-black text-white">Avançado</span>
+                        <span className="text-2xl font-black text-white">
+                          Avançado
+                        </span>
                         <span className="text-sm text-fuchsia-300">✨</span>
                       </div>
-                      <p className="mt-1 text-xs font-semibold text-white/75">A experiência completa</p>
+                      <p className="mt-1 text-xs font-semibold text-white/75">
+                        A experiência completa
+                      </p>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-3xl font-black leading-none text-white">R$ 24,90</p>
+                      <p className="text-3xl font-black leading-none text-white">
+                        R$ 24,90
+                      </p>
                       <p className="mt-1 text-[9px] font-black uppercase tracking-widest text-fuchsia-400/80">
-                         {selectedQrStyle === 'classico' ? '+ QR Code Gratuito' : '+ QR Code R$ 3,90'}
+                       
                       </p>
                     </div>
                   </div>
@@ -1801,7 +1891,13 @@ const montagem = () => {
                   </div>
 
                   <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-fuchsia-500/15 border border-fuchsia-400/30 py-2.5 text-xs font-black uppercase tracking-widest text-fuchsia-300">
-                    {isProcessingPayment ? <span className="animate-pulse">Processando...</span> : <><span>Escolher Avançado</span> <ArrowRight size={14} /></>}
+                    {isProcessingPayment ? (
+                      <span className="animate-pulse">Processando...</span>
+                    ) : (
+                      <>
+                        <span>Escolher Avançado</span> <ArrowRight size={14} />
+                      </>
+                    )}
                   </div>
                 </button>
               </div>
@@ -1929,8 +2025,7 @@ const montagem = () => {
               currentStep !== 6 &&
               currentStep !== 7 &&
               currentStep !== 8 &&
-              currentStep !== 9 &&
-              currentStep !== 10 && (
+              currentStep !== 9 && (
                 <>
                   <input
                     type="text"
@@ -2029,63 +2124,8 @@ const montagem = () => {
             <div
               className={`relative h-full w-full overflow-hidden transition-all duration-700 ${backgrounds.find((bg) => bg.id === selectedBackground)?.class || "bg-[#0C0212]"}`}
             >
-              {/* QR Code Full Preview (Passo 9) */}
-              {currentStep === 9 && (
-                 <div className="absolute inset-0 z-[60] animate-in fade-in duration-700">
-                    {/* Background do QR Code selecionado */}
-                    {selectedQrStyle === "classico" && (
-                      <div className="w-full h-full bg-white flex flex-col items-center justify-center p-12">
-                         <div className="w-full aspect-square bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MyCupid')] bg-contain bg-center bg-no-repeat mb-10"></div>
-                         <p className="text-[10px] text-black/40 font-black uppercase tracking-[0.3em] text-center">SEU QR CODE CLÁSSICO</p>
-                      </div>
-                    )}
-                    {selectedQrStyle === "juntos" && (
-                      <div className="w-full h-full bg-pink-50 flex flex-col items-center justify-center p-10 relative overflow-hidden">
-                         <h2 className="text-2xl text-red-500 font-bold mb-8 italic tracking-tight" style={{ fontFamily: 'Playlist' }}>Juntos para Sempre</h2>
-                         <div className="w-full aspect-square bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Love&color=800000')] bg-contain bg-center bg-no-repeat mb-10"></div>
-                         <p className="text-[10px] text-red-500/60 font-black uppercase tracking-[0.3em] text-center">SEU QR CODE JUNTOS</p>
-                         
-                         {/* Hearts scattered */}
-                         {[...Array(12)].map((_, i) => (
-                           <div 
-                             key={i} 
-                             className="absolute text-red-400/40 animate-pulse" 
-                             style={{ 
-                               top: `${Math.random() * 100}%`, 
-                               left: `${Math.random() * 100}%`,
-                               fontSize: `${10 + Math.random() * 20}px`,
-                               animationDelay: `${Math.random() * 2}s`
-                             }}
-                           >
-                             ❤️
-                           </div>
-                         ))}
-                      </div>
-                    )}
-                    {selectedQrStyle === "gatinho" && (
-                      <div className="w-full h-full bg-white flex flex-col items-center justify-center p-10 relative overflow-hidden">
-                         <h2 className="text-2xl text-fuchsia-600 font-bold mb-8 italic tracking-tight" style={{ fontFamily: 'Playlist' }}>Te amo Gatinho</h2>
-                         <div className="w-full aspect-square bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Kitten&color=FF00FF')] bg-contain bg-center bg-no-repeat mb-10"></div>
-                         <p className="text-[10px] text-fuchsia-600/60 font-black uppercase tracking-[0.3em] text-center">SEU QR CODE GATINHO</p>
-                         
-                         {/* Paws scattered */}
-                         {[...Array(8)].map((_, i) => (
-                           <div 
-                             key={i} 
-                             className="absolute opacity-5 text-4xl" 
-                             style={{ 
-                               top: `${Math.random() * 100}%`, 
-                               left: `${Math.random() * 100}%`,
-                               transform: `rotate(${Math.random() * 360}deg)`,
-                             }}
-                           >
-                             🐾
-                           </div>
-                         ))}
-                      </div>
-                    )}
-                 </div>
-              )}
+              {/* QR Code Full Preview (Passo 9 - comentado) */}
+              {/* {currentStep === 9 && ( ... )} */}
               {/* Special Opening Overlay */}
               {specialOpening.enabled && !specialOpening.isFinished && (
                 <div
@@ -2258,7 +2298,7 @@ const montagem = () => {
                 {currentStep >= 4 && uploadedImages.length > 0 && (
                   <button
                     onClick={() => setIsDomeOpen(true)}
-                    className="mt-6 flex w-full items-center justify-center gap-3 rounded-2xl border border-[#4A2440] bg-[#1E0E1C] px-4 py-2 text-center transition-colors hover:bg-white/5 shadow-lg shadow-fuchsia-900/20"
+                    className="mt-6 flex w-full mb-2 items-center justify-center gap-3 rounded-2xl border border-[#4A2440] bg-[#1E0E1C] px-4 py-2 text-center transition-colors hover:bg-white/5 shadow-lg shadow-fuchsia-900/20"
                   >
                     <Eye size={18} className="text-white/80" />
                     <span className="text-sm font-semibold text-white">
@@ -2415,7 +2455,6 @@ const montagem = () => {
                     </div>
                   </div>
                 )}
-
               </div>
 
               {/* Game Selector Overlay - stays on top of scrollable content */}
@@ -2837,8 +2876,11 @@ const montagem = () => {
           onClick={() => {
             if (currentStep === item.length - 1) {
               // Scroll to plans or just show an alert
-              const container = document.querySelector('.overflow-y-auto');
-              container?.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+              const container = document.querySelector(".overflow-y-auto");
+              container?.scrollTo({
+                top: container.scrollHeight,
+                behavior: "smooth",
+              });
             } else {
               handleNextStep();
             }
@@ -2931,6 +2973,14 @@ const montagem = () => {
         }
       `}</style>
     </div>
+  );
+};
+
+const montagem = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0C0212] flex items-center justify-center text-white font-bold animate-pulse">Carregando...</div>}>
+      <MontagemContent />
+    </Suspense>
   );
 };
 
