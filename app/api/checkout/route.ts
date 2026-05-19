@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const origin = req.headers.get('origin');
 
     // Configura os itens da Stripe
-    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+    const line_items: any[] = [
       {
         price_data: {
           currency: 'brl',
